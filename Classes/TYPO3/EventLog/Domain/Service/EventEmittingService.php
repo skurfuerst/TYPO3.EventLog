@@ -61,10 +61,12 @@ class EventEmittingService {
 	}
 
 
-	public function emit($eventType, array $data) {
-		$event = new Event($eventType, $data, $this->currentUser, $this->getCurrentContext());
+	public function emit($eventType, array $data, $eventClassName = 'TYPO3\EventLog\Domain\Model\Event') {
+		$event = new $eventClassName($eventType, $data, $this->currentUser, $this->getCurrentContext());
 		$this->eventRepository->add($event);
 		$this->lastEmittedEvent = $event;
+
+		return $event;
 	}
 
 	protected function getCurrentContext() {

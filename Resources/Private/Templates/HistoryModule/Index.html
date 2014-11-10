@@ -1,8 +1,13 @@
+{namespace n=TYPO3\Neos\ViewHelpers}
+{namespace history=TYPO3\EventLog\ViewHelpers}
 <f:for each="{events}" as="event">
 	<div style="clear:both;">
 		{event.eventType}
 		{event.timestamp -> f:format.date(forceLocale: true)}
 		<f:render section="{event.eventType}" arguments="{event: event}" optional="TRUE" />
+		<f:if condition="{event.numberOfFollowingSimilarEvents}">
+			and {event.numberOfFollowingSimilarEvents} more
+		</f:if>
 	</div>
 </f:for>
 
@@ -18,10 +23,10 @@
 
 
 <f:section name="NODE_ADOPT">
-	Adopted
-	{event.data.sourceNode} to {event.data.targetContext.workspaceName}, {event.data.targetContext.dimensions -> f:debug()}
+	Created variant of {event.data.documentNodeType} <n:link.node node="{event.documentNode}" />
+	in {event.data.targetDimensions -> history:renderDimensions()}
 </f:section>
 
 <f:section name="NODE_PUBLISHED">
-	Published {event.data.node} to {event.data.workspace}
+	Published {event.node.label} ({event.data.documentNodeType} <n:link.node node="{event.documentNode}" />)
 </f:section>

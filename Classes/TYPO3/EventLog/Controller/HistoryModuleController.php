@@ -23,8 +23,24 @@ class HistoryModuleController extends \TYPO3\Neos\Controller\Module\AbstractModu
 	protected $eventRepository;
 
 	public function indexAction() {
-		$events = $this->eventRepository->findRelevantEvents();
+		$events = $this->eventRepository->findRelevantEvents()->toArray();
+		$events = array_reverse($events);
 
-		$this->view->assign('events', $events);
+		$processedEvents = array(
+			array_shift($events)
+		);
+
+		foreach ($events as $event) {
+			$lastProcessedEvent = end($processedEvents);
+			if ($lastProcessedEvent->getEventType() === $event->getEventType() && $lastProcessedEvent->getTimestamp() == $event->getTimestamp()) {
+				$lastProcessedEvent->addSimilarEvent();
+			} else {
+				$processedEvents[] = $event;
+			}
+		}
+
+		$processedEvents = array_reverse($processedEvents);
+
+		$this->view->assign('events', $processedEvents);
 	}
 }

@@ -11,6 +11,7 @@ namespace TYPO3\EventLog\Integrations;
  * The TYPO3 project - inspiring people to share!                         *
  *                                                                        */
 
+use TYPO3\EventLog\Domain\Model\NodeEvent;
 use TYPO3\EventLog\Domain\Service\EventEmittingService;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\TYPO3CR\Domain\Model\NodeInterface;
@@ -47,11 +48,15 @@ class TYPO3CRIntegrationService {
 	protected $changedNodes = array();
 
 	public function nodeAdded(NodeInterface $node) {
-		$this->eventEmittingService->emit(self::NODE_ADDED, array('node' => $node->getContextPath()));
+		/* @var $nodeEvent NodeEvent */
+		$nodeEvent = $this->eventEmittingService->emit(self::NODE_ADDED, array(), 'TYPO3\EventLog\Domain\Model\NodeEvent');
+		$nodeEvent->setNode($node);
 	}
 	public function nodeUpdated(NodeInterface $node) {
 		if (!isset($this->changedNodes[$node->getContextPath()])) {
-			$this->changedNodes[$node->getContextPath()] = array();
+			$this->changedNodes[$node->getContextPath()] = array(
+				'node' => $node
+			);
 		}
 	}
 
@@ -60,7 +65,9 @@ class TYPO3CRIntegrationService {
 			return;
 		}
 		if (!isset($this->changedNodes[$node->getContextPath()])) {
-			$this->changedNodes[$node->getContextPath()] = array();
+			$this->changedNodes[$node->getContextPath()] = array(
+				'node' => $node
+			);
 		}
 
 		$this->changedNodes[$node->getContextPath()]['old'][$propertyName] = $oldValue;
@@ -68,13 +75,17 @@ class TYPO3CRIntegrationService {
 	}
 
 	public function nodeRemoved(NodeInterface $node) {
-		$this->eventEmittingService->emit(self::NODE_REMOVED, array('node' => $node->getContextPath()));
+		/* @var $nodeEvent NodeEvent */
+		$nodeEvent = $this->eventEmittingService->emit(self::NODE_REMOVED, array(), 'TYPO3\EventLog\Domain\Model\NodeEvent');
+		$nodeEvent->setNode($node);
 	}
 
 	public function nodePublished(NodeInterface $node, Workspace $targetWorkspace) {
-		$this->eventEmittingService->emit(self::NODE_PUBLISHED, array('node' => $node->getContextPath(), 'workspace' => $targetWorkspace->getName()));
-
+		/* @var $nodeEvent NodeEvent */
+		$nodeEvent = $this->eventEmittingService->emit(self::NODE_PUBLISHED, array('targetWorkspace' => $targetWorkspace->getName()), 'TYPO3\EventLog\Domain\Model\NodeEvent');
+		$nodeEvent->setNode($node);
 	}
+
 	public function nodeDiscarded(NodeInterface $node) {
 		$this->eventEmittingService->emit(self::NODE_DISCARDED, array('node' => $node->getContextPath()));
 	}
@@ -87,10 +98,11 @@ class TYPO3CRIntegrationService {
 
 		$this->currentlyCopying = TRUE;
 
+		/* @var $nodeEvent NodeEvent */
 		$this->eventEmittingService->emit(self::NODE_COPY, array(
-			'sourceNode' => $sourceNode->getContextPath(),
 			'copiedInto' => $targetParentNode->getContextPath()
-		));
+		), 'TYPO3\EventLog\Domain\Model\NodeEvent');
+		$nodeEvent->setNode($sourceNode);
 		$this->eventEmittingService->pushContext();
 	}
 
@@ -104,12 +116,15 @@ class TYPO3CRIntegrationService {
 
 	protected $currentlyAdopting = 0;
 	public function beforeAdoptNode(NodeInterface $node, Context $context, $recursive) {
+		$this->initUser();
 		if ($this->currentlyAdopting === 0) {
-			$this->eventEmittingService->emit(self::NODE_ADOPT, array(
-				'sourceNode' => $node->getContextPath(),
-				'targetContext' => $context->getProperties(),
+			/* @var $nodeEvent NodeEvent */
+			$nodeEvent = $this->eventEmittingService->emit(self::NODE_ADOPT, array(
+				'targetWorkspace' => $context->getWorkspaceName(),
+				'targetDimensions' => $context->getTargetDimensions(),
 				'recursive' => $recursive
-			));
+			), 'TYPO3\EventLog\Domain\Model\NodeEvent');
+			$nodeEvent->setNode($node);
 			$this->eventEmittingService->pushContext();
 		}
 
@@ -123,17 +138,22 @@ class TYPO3CRIntegrationService {
 		}
 	}
 
-	public function generateNodeEvents() {
+	protected function initUser() {
 		if ($this->securityContext->canBeInitialized()) {
 			$account = $this->securityContext->getAccount();
 			if ($account !== NULL) {
 				$this->eventEmittingService->setCurrentUser($account->getAccountIdentifier());
 			}
 		}
+	}
 
+	public function generateNodeEvents() {
+		$this->initUser();
 
 		foreach ($this->changedNodes as $nodePath => $data) {
-			$this->eventEmittingService->emit(self::NODE_UPDATED, array('node' => $nodePath, 'data' => $data));
+			/* @var $nodeEvent NodeEvent */
+			$nodeEvent = $this->eventEmittingService->emit(self::NODE_UPDATED, array('data' => $data), 'TYPO3\EventLog\Domain\Model\NodeEvent');
+			$nodeEvent->setNode($data['node']);
 		}
 	}
 }

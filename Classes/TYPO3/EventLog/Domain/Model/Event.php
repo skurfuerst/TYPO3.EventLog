@@ -18,6 +18,7 @@ use Doctrine\ORM\Mapping as ORM;
  * A basic event
  *
  * @Flow\Entity
+ * @ORM\InheritanceType("SINGLE_TABLE")
  */
 class Event {
 	/**
@@ -62,6 +63,12 @@ class Event {
 	 * @ORM\ManyToOne
 	 */
 	protected $parentEvent;
+
+	/**
+	 * @Flow\Transient
+	 * @var integer
+	 */
+	protected $numberOfFollowingSimilarEvents = 0;
 
 	function __construct($eventType, $data, $user = NULL, Event $parentEvent = NULL) {
 		$this->timestamp = new \DateTime();
@@ -114,8 +121,14 @@ class Event {
 		return $this->user;
 	}
 
+	public function addSimilarEvent() {
+		$this->numberOfFollowingSimilarEvents++;
+	}
 
-
-
-
+	/**
+	 * @return int
+	 */
+	public function getNumberOfFollowingSimilarEvents() {
+		return $this->numberOfFollowingSimilarEvents;
+	}
 }

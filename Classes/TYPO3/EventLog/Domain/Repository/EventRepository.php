@@ -33,7 +33,7 @@ class EventRepository extends Repository {
 			$qb->expr()->isNull('e.parentEvent')
 		);
 
-		$qb->orderBy('e.uid', 'ASC');
+		$qb->orderBy('e.uid', 'DESC');
 
 		return $q->execute();
 	}
