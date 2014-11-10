@@ -1,0 +1,12 @@
+#                                                                        #
+# Security policy for the TYPO3 Neos package                             #
+#                                                                        #
+
+resources:
+  methods:
+    TYPO3_EventLog_Backend_Module_HistoryModule: 'method(TYPO3\EventLog\Controller\HistoryModuleController->(index)Action())'
+
+acls:
+  'TYPO3.Neos:Editor':
+    methods:
+      TYPO3_EventLog_Backend_Module_HistoryModule: GRANT

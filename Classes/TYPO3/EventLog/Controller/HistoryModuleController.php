@@ -1,5 +1,5 @@
 <?php
-namespace TYPO3\EventLog\Domain\Repository;
+namespace TYPO3\EventLog\Controller;
 
 /*                                                                        *
  * This script belongs to the TYPO3 Flow package "TYPO3.EventLog".        *
@@ -12,29 +12,19 @@ namespace TYPO3\EventLog\Domain\Repository;
  *                                                                        */
 
 use TYPO3\Flow\Annotations as Flow;
-use TYPO3\Flow\Persistence\Repository;
-use TYPO3\Flow\Reflection\ObjectAccess;
+use TYPO3\EventLog\Domain\Repository\EventRepository;
 
-/**
- * The repository for events
- *
- * @Flow\Scope("singleton")
- */
-class EventRepository extends Repository {
+class HistoryModuleController extends \TYPO3\Neos\Controller\Module\AbstractModuleController {
 
-	public function findRelevantEvents() {
+	/**
+	 * @Flow\Inject
+	 * @var EventRepository
+	 */
+	protected $eventRepository;
 
-		$q = $this->createQuery();
-		// workaround: query should have a getQueryBuilder() method.
-		/* @var $qb \Doctrine\ORM\QueryBuilder */
-		$qb = ObjectAccess::getProperty($q, 'queryBuilder', TRUE);
+	public function indexAction() {
+		$events = $this->eventRepository->findRelevantEvents();
 
-		$qb->andWhere(
-			$qb->expr()->isNull('e.parentEvent')
-		);
-
-		$qb->orderBy('e.uid', 'ASC');
-
-		return $q->execute();
+		$this->view->assign('events', $events);
 	}
 }

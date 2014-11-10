@@ -13,8 +13,9 @@ namespace TYPO3\EventLog\Integrations;
 
 use TYPO3\EventLog\Domain\Service\EventEmittingService;
 use TYPO3\Flow\Annotations as Flow;
-use TYPO3\Flow\Security\Context;
 use TYPO3\TYPO3CR\Domain\Model\NodeInterface;
+use TYPO3\TYPO3CR\Domain\Model\Workspace;
+use TYPO3\TYPO3CR\Domain\Service\Context;
 
 /**
  * The repository for events
@@ -31,7 +32,7 @@ class TYPO3CRIntegrationService {
 
 	/**
 	 * @Flow\Inject
-	 * @var Context
+	 * @var \TYPO3\Flow\Security\Context
 	 */
 	protected $securityContext;
 
@@ -41,6 +42,7 @@ class TYPO3CRIntegrationService {
 	const NODE_PUBLISHED = 'NODE_PUBLISHED';
 	const NODE_COPY = 'NODE_COPY';
 	const NODE_DISCARDED = 'NODE_DISCARDED';
+	const NODE_ADOPT = 'NODE_ADOPT';
 
 	protected $changedNodes = array();
 
@@ -69,8 +71,8 @@ class TYPO3CRIntegrationService {
 		$this->eventEmittingService->emit(self::NODE_REMOVED, array('node' => $node->getContextPath()));
 	}
 
-	public function nodePublished(NodeInterface $node) {
-		$this->eventEmittingService->emit(self::NODE_PUBLISHED, array('node' => $node->getContextPath()));
+	public function nodePublished(NodeInterface $node, Workspace $targetWorkspace) {
+		$this->eventEmittingService->emit(self::NODE_PUBLISHED, array('node' => $node->getContextPath(), 'workspace' => $targetWorkspace->getName()));
 
 	}
 	public function nodeDiscarded(NodeInterface $node) {
@@ -100,11 +102,35 @@ class TYPO3CRIntegrationService {
 		$this->eventEmittingService->popContext();
 	}
 
-	public function generateNodeEvents() {
-		$account = $this->securityContext->getAccount();
-		if ($account !== NULL) {
-			$this->eventEmittingService->setCurrentUser($account->getAccountIdentifier());
+	protected $currentlyAdopting = 0;
+	public function beforeAdoptNode(NodeInterface $node, Context $context, $recursive) {
+		if ($this->currentlyAdopting === 0) {
+			$this->eventEmittingService->emit(self::NODE_ADOPT, array(
+				'sourceNode' => $node->getContextPath(),
+				'targetContext' => $context->getProperties(),
+				'recursive' => $recursive
+			));
+			$this->eventEmittingService->pushContext();
 		}
+
+		$this->currentlyAdopting++;
+	}
+
+	public function afterAdoptNode(NodeInterface $node, Context $context, $recursive) {
+		$this->currentlyAdopting--;
+		if ($this->currentlyAdopting === 0) {
+			$this->eventEmittingService->popContext();
+		}
+	}
+
+	public function generateNodeEvents() {
+		if ($this->securityContext->canBeInitialized()) {
+			$account = $this->securityContext->getAccount();
+			if ($account !== NULL) {
+				$this->eventEmittingService->setCurrentUser($account->getAccountIdentifier());
+			}
+		}
+
 
 		foreach ($this->changedNodes as $nodePath => $data) {
 			$this->eventEmittingService->emit(self::NODE_UPDATED, array('node' => $nodePath, 'data' => $data));

@@ -1,0 +1,11 @@
+TYPO3:
+  Neos:
+    modules:
+      management:
+        submodules:
+          history:
+            label: 'History'
+            controller: '\TYPO3\EventLog\Controller\HistoryModuleController'
+            description: 'This module contains a list of all historic changes in Neos.'
+            icon: 'icon-calendar'
+            resource: 'TYPO3_EventLog_Backend_Module_HistoryModule'

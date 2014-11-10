@@ -32,7 +32,10 @@ class Package extends BasePackage {
 		$dispatcher->connect('TYPO3\TYPO3CR\Domain\Model\Node', 'beforeNodeCopy', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'beforeNodeCopy');
 		$dispatcher->connect('TYPO3\TYPO3CR\Domain\Model\Node', 'nodeCopied', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'nodeCopied');
 
-		$dispatcher->connect('TYPO3\Neos\Service\PublishingService', 'nodePublished', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'nodePublished');
+		$dispatcher->connect('TYPO3\TYPO3CR\Domain\Service\Context', 'beforeAdoptNode', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'beforeAdoptNode');
+		$dispatcher->connect('TYPO3\TYPO3CR\Domain\Service\Context', 'afterAdoptNode', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'afterAdoptNode');
+
+		$dispatcher->connect('TYPO3\TYPO3CR\Domain\Model\Workspace', 'afterNodePublishing', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'nodePublished');
 		$dispatcher->connect('TYPO3\Neos\Service\PublishingService', 'nodeDiscarded', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'nodeDiscarded');
 
 

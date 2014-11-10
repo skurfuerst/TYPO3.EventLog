@@ -1,0 +1,27 @@
+<f:for each="{events}" as="event">
+	<div style="clear:both;">
+		{event.eventType}
+		{event.timestamp -> f:format.date(forceLocale: true)}
+		<f:render section="{event.eventType}" arguments="{event: event}" optional="TRUE" />
+	</div>
+</f:for>
+
+<f:section name="NODE_ADDED">
+	Node Added
+	{event -> f:debug()}
+</f:section>
+
+<f:section name="NODE_UPDATED">
+	Node Updated
+	{event -> f:debug()}
+</f:section>
+
+
+<f:section name="NODE_ADOPT">
+	Adopted
+	{event.data.sourceNode} to {event.data.targetContext.workspaceName}, {event.data.targetContext.dimensions -> f:debug()}
+</f:section>
+
+<f:section name="NODE_PUBLISHED">
+	Published {event.data.node} to {event.data.workspace}
+</f:section>
