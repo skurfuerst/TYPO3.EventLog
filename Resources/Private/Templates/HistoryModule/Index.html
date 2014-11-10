@@ -14,7 +14,15 @@
 </f:for>
 
 <f:section name="NODE_PUBLISHED">
-	Published {event.data.documentNodeType} <n:link.node node="{event.node}" />
+	Published {event.data.documentNodeType}
+	<f:if condition="{event.node}">
+		<f:then>
+			<n:link.node node="{event.node}" />
+		</f:then>
+		<f:else>
+			<span title="This node has been removed in the meantime">{event.data.nodeLabel}</span>
+		</f:else>
+	</f:if>
 
 	<p>
 	<f:for each="{event.childEvents}" as="childEvent">

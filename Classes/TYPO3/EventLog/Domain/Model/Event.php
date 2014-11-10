@@ -65,16 +65,16 @@ class Event {
 	protected $parentEvent;
 
 	/**
-	 * @Flow\Transient
-	 * @var integer
-	 */
-	protected $numberOfFollowingSimilarEvents = 0;
-
-	/**
 	 * @var array<TYPO3\EventLog\Domain\Model\Event>
 	 * @ORM\OneToMany(targetEntity="TYPO3\EventLog\Domain\Model\Event", mappedBy="parentEvent")
 	 */
 	protected $childEvents;
+
+	/**
+	 * @Flow\Transient
+	 * @var integer
+	 */
+	protected $numberOfFollowingSimilarEvents = 0;
 
 	function __construct($eventType, $data, $user = NULL, Event $parentEvent = NULL) {
 		$this->timestamp = new \DateTime();
@@ -82,14 +82,6 @@ class Event {
 		$this->data = $data;
 		$this->user = $user;
 		$this->parentEvent = $parentEvent;
-	}
-
-
-	/**
-	 * @return string
-	 */
-	public function getContext() {
-		return $this->context;
 	}
 
 	/**
