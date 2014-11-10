@@ -89,9 +89,9 @@ class NodeEvent extends Event {
 			'site' => $this->persistenceManager->getIdentifierByObject($node->getContext()->getCurrentSite())
 		));
 
-		while ($node !== NULL && !$node->getNodeType()->isOfType('TYPO3.Neos:Document')) {
-			$node = $node->getParent();
-		}
+
+		$node = self::getClosestDocumentNode($node);
+
 		if ($node !== NULL) {
 			$this->documentNodeIdentifier = $node->getIdentifier();
 			$this->data = Arrays::arrayMergeRecursiveOverrule($this->data, array(
@@ -102,11 +102,19 @@ class NodeEvent extends Event {
 		}
 	}
 
+	public static function getClosestDocumentNode(NodeInterface $node) {
+		while ($node !== NULL && !$node->getNodeType()->isOfType('TYPO3.Neos:Document')) {
+			$node = $node->getParent();
+		}
+		return $node;
+	}
+
 	public function getDocumentNode() {
 		$context = $this->contextFactory->create(array(
 			'workspaceName' => $this->userService->getCurrentWorkspace()->getName(),
 	 		'dimensions' => $this->dimension,
-			'currentSite' => $this->siteRepository->findByIdentifier($this->data['site'])
+			'currentSite' => $this->siteRepository->findByIdentifier($this->data['site']),
+			'invisibleContentShown' => TRUE
 		));
 		return $context->getNodeByIdentifier($this->documentNodeIdentifier);
 	}
@@ -115,8 +123,10 @@ class NodeEvent extends Event {
 		$context = $this->contextFactory->create(array(
 			'workspaceName' => $this->userService->getCurrentWorkspace()->getName(),
 			'dimensions' => $this->dimension,
-			'currentSite' => $this->siteRepository->findByIdentifier($this->data['site'])
+			'currentSite' => $this->siteRepository->findByIdentifier($this->data['site']),
+			'invisibleContentShown' => TRUE
 		));
+
 		return $context->getNodeByIdentifier($this->nodeIdentifier);
 	}
 } 

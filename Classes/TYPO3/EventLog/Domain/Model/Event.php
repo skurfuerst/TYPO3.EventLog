@@ -70,6 +70,12 @@ class Event {
 	 */
 	protected $numberOfFollowingSimilarEvents = 0;
 
+	/**
+	 * @var array<TYPO3\EventLog\Domain\Model\Event>
+	 * @ORM\OneToMany(targetEntity="TYPO3\EventLog\Domain\Model\Event", mappedBy="parentEvent")
+	 */
+	protected $childEvents;
+
 	function __construct($eventType, $data, $user = NULL, Event $parentEvent = NULL) {
 		$this->timestamp = new \DateTime();
 		$this->eventType = $eventType;
@@ -130,5 +136,12 @@ class Event {
 	 */
 	public function getNumberOfFollowingSimilarEvents() {
 		return $this->numberOfFollowingSimilarEvents;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getChildEvents() {
+		return $this->childEvents;
 	}
 }

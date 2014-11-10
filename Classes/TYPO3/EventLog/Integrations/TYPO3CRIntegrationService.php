@@ -11,9 +11,11 @@ namespace TYPO3\EventLog\Integrations;
  * The TYPO3 project - inspiring people to share!                         *
  *                                                                        */
 
+use Doctrine\ORM\EntityManager;
 use TYPO3\EventLog\Domain\Model\NodeEvent;
 use TYPO3\EventLog\Domain\Service\EventEmittingService;
 use TYPO3\Flow\Annotations as Flow;
+use TYPO3\Flow\Persistence\PersistenceManagerInterface;
 use TYPO3\TYPO3CR\Domain\Model\NodeInterface;
 use TYPO3\TYPO3CR\Domain\Model\Workspace;
 use TYPO3\TYPO3CR\Domain\Service\Context;
@@ -37,10 +39,23 @@ class TYPO3CRIntegrationService {
 	 */
 	protected $securityContext;
 
+	/**
+	 * @Flow\Inject
+	 * @var \Doctrine\Common\Persistence\ObjectManager
+	 */
+	protected $entityManager;
+
+	/**
+	 * @Flow\Inject
+	 * @var PersistenceManagerInterface
+	 */
+	protected $persistenceManager;
+
+
 	const NODE_ADDED = 'NODE_ADDED';
 	const NODE_UPDATED = 'NODE_UPDATED';
 	const NODE_REMOVED = 'NODE_REMOVED';
-	const NODE_PUBLISHED = 'NODE_PUBLISHED';
+	const DOCUMENT_PUBLISHED = 'NODE_PUBLISHED';
 	const NODE_COPY = 'NODE_COPY';
 	const NODE_DISCARDED = 'NODE_DISCARDED';
 	const NODE_ADOPT = 'NODE_ADOPT';
@@ -80,11 +95,11 @@ class TYPO3CRIntegrationService {
 		$nodeEvent->setNode($node);
 	}
 
-	public function nodePublished(NodeInterface $node, Workspace $targetWorkspace) {
-		/* @var $nodeEvent NodeEvent */
-		$nodeEvent = $this->eventEmittingService->emit(self::NODE_PUBLISHED, array('targetWorkspace' => $targetWorkspace->getName()), 'TYPO3\EventLog\Domain\Model\NodeEvent');
-		$nodeEvent->setNode($node);
+	public function beforeNodePublishing(NodeInterface $node, Workspace $targetWorkspace) {
+
 	}
+
+
 
 	public function nodeDiscarded(NodeInterface $node) {
 		$this->eventEmittingService->emit(self::NODE_DISCARDED, array('node' => $node->getContextPath()));
@@ -99,7 +114,7 @@ class TYPO3CRIntegrationService {
 		$this->currentlyCopying = TRUE;
 
 		/* @var $nodeEvent NodeEvent */
-		$this->eventEmittingService->emit(self::NODE_COPY, array(
+		$nodeEvent = $this->eventEmittingService->emit(self::NODE_COPY, array(
 			'copiedInto' => $targetParentNode->getContextPath()
 		), 'TYPO3\EventLog\Domain\Model\NodeEvent');
 		$nodeEvent->setNode($sourceNode);
@@ -151,9 +166,62 @@ class TYPO3CRIntegrationService {
 		$this->initUser();
 
 		foreach ($this->changedNodes as $nodePath => $data) {
+			$node = $data['node'];
+			unset($data['node']);
 			/* @var $nodeEvent NodeEvent */
-			$nodeEvent = $this->eventEmittingService->emit(self::NODE_UPDATED, array('data' => $data), 'TYPO3\EventLog\Domain\Model\NodeEvent');
-			$nodeEvent->setNode($data['node']);
+			$nodeEvent = $this->eventEmittingService->emit(self::NODE_UPDATED, $data, 'TYPO3\EventLog\Domain\Model\NodeEvent');
+			$nodeEvent->setNode($node);
 		}
+	}
+
+
+	protected $scheduledNodeEventUpdates = array();
+
+	public function afterNodePublishing(NodeInterface $node, Workspace $targetWorkspace) {
+		$documentNode = NodeEvent::getClosestDocumentNode($node);
+
+		$this->scheduledNodeEventUpdates[$documentNode->getContextPath()] = array(
+
+			'workspaceName' => $node->getContext()->getWorkspaceName(),
+			'nestedNodeIdentifiersWhichArePublished' => array(),
+			'targetWorkspace' => $targetWorkspace->getName(),
+			'documentNode' => $documentNode
+		);
+
+		$this->scheduledNodeEventUpdates[$documentNode->getContextPath()]['nestedNodeIdentifiersWhichArePublished'][] = $node->getIdentifier();
+	}
+
+
+	public function updateEventsAfterPublish() {
+
+		/** @var $entityManager EntityManager */
+		$entityManager = $this->entityManager;
+
+		foreach ($this->scheduledNodeEventUpdates as $documentPublish) {
+
+			/* @var $nodeEvent NodeEvent */
+			$nodeEvent = $this->eventEmittingService->emit(self::DOCUMENT_PUBLISHED, array(), 'TYPO3\EventLog\Domain\Model\NodeEvent');
+			$nodeEvent->setNode($documentPublish['documentNode']);
+			$this->persistenceManager->whitelistObject($nodeEvent);
+			$this->persistenceManager->persistAll(TRUE);
+
+			$parentEventIdentifier = $this->persistenceManager->getIdentifierByObject($nodeEvent);
+
+			$qb = $entityManager->createQueryBuilder();
+			$qb->update('TYPO3\EventLog\Domain\Model\NodeEvent', 'e')
+				->set('e.parentEvent', $qb->expr()->literal($parentEventIdentifier))
+				->where('e.parentEvent IS NULL')
+				->andWhere('e.workspaceName = :workspaceName')
+				->setParameter('workspaceName', $documentPublish['workspaceName'])
+				->andWhere('e.documentNodeIdentifier = :documentNodeIdentifier')
+				->setParameter('documentNodeIdentifier', $documentPublish['documentNode']->getIdentifier())
+				->andWhere('e != :parentEvent')
+				->setParameter('parentEvent', $parentEventIdentifier)
+				->andWhere('e.eventType != :publishedEventType')
+				->setParameter('publishedEventType', self::DOCUMENT_PUBLISHED)
+			   ->getQuery()->execute();
+		}
+
+		$this->scheduledNodeEventUpdates = array();
 	}
 }

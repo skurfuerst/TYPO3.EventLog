@@ -35,12 +35,16 @@ class Package extends BasePackage {
 		$dispatcher->connect('TYPO3\TYPO3CR\Domain\Service\Context', 'beforeAdoptNode', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'beforeAdoptNode');
 		$dispatcher->connect('TYPO3\TYPO3CR\Domain\Service\Context', 'afterAdoptNode', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'afterAdoptNode');
 
-		$dispatcher->connect('TYPO3\TYPO3CR\Domain\Model\Workspace', 'afterNodePublishing', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'nodePublished');
+		$dispatcher->connect('TYPO3\TYPO3CR\Domain\Model\Workspace', 'beforeNodePublishing', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'beforeNodePublishing');
+		$dispatcher->connect('TYPO3\TYPO3CR\Domain\Model\Workspace', 'afterNodePublishing', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'afterNodePublishing');
 		$dispatcher->connect('TYPO3\Neos\Service\PublishingService', 'nodeDiscarded', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'nodeDiscarded');
 
 
 		$dispatcher->connect('TYPO3\Flow\Persistence\Doctrine\PersistenceManager', 'beforeAllObjectsPersist', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'generateNodeEvents');
 		$dispatcher->connect('TYPO3\TYPO3CR\Domain\Repository\NodeDataRepository', 'beforeRepositoryObjectsPersist', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'generateNodeEvents');
+
+		$dispatcher->connect('TYPO3\Flow\Persistence\Doctrine\PersistenceManager', 'allObjectsPersisted', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'updateEventsAfterPublish');
+		$dispatcher->connect('TYPO3\TYPO3CR\Domain\Repository\NodeDataRepository', 'repositoryObjectsPersisted', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'updateEventsAfterPublish');
 
 
 		/*$dispatcher->connect('TYPO3\Neos\Domain\Model\Site', 'siteChanged', $flushConfigurationCache);

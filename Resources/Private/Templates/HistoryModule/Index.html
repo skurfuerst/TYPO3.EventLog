@@ -3,30 +3,22 @@
 <f:for each="{events}" as="event">
 	<div style="clear:both;">
 		{event.eventType}
-		{event.timestamp -> f:format.date(forceLocale: true)}
+		{event.user} <br />
+		{event.timestamp -> f:format.date(forceLocale: true)} <br />
 		<f:render section="{event.eventType}" arguments="{event: event}" optional="TRUE" />
 		<f:if condition="{event.numberOfFollowingSimilarEvents}">
 			and {event.numberOfFollowingSimilarEvents} more
 		</f:if>
 	</div>
+	<hr />
 </f:for>
 
-<f:section name="NODE_ADDED">
-	Node Added
-	{event -> f:debug()}
-</f:section>
-
-<f:section name="NODE_UPDATED">
-	Node Updated
-	{event -> f:debug()}
-</f:section>
-
-
-<f:section name="NODE_ADOPT">
-	Created variant of {event.data.documentNodeType} <n:link.node node="{event.documentNode}" />
-	in {event.data.targetDimensions -> history:renderDimensions()}
-</f:section>
-
 <f:section name="NODE_PUBLISHED">
-	Published {event.node.label} ({event.data.documentNodeType} <n:link.node node="{event.documentNode}" />)
+	Published {event.data.documentNodeType} <n:link.node node="{event.node}" />
+
+	<p>
+	<f:for each="{event.childEvents}" as="childEvent">
+		{childEvent.eventType}
+	</f:for>
+	</p>
 </f:section>
