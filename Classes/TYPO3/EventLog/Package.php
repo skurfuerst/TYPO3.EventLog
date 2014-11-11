@@ -27,8 +27,11 @@ class Package extends BasePackage {
 
 		$dispatcher->connect('TYPO3\TYPO3CR\Domain\Model\Node', 'nodeAdded', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'nodeAdded');
 		$dispatcher->connect('TYPO3\TYPO3CR\Domain\Model\Node', 'nodeUpdated', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'nodeUpdated');
-		$dispatcher->connect('TYPO3\TYPO3CR\Domain\Model\Node', 'nodePropertyChanged', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'nodePropertyChanged');
 		$dispatcher->connect('TYPO3\TYPO3CR\Domain\Model\Node', 'nodeRemoved', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'nodeRemoved');
+
+		$dispatcher->connect('TYPO3\TYPO3CR\Domain\Model\Node', 'beforeNodePropertyChange', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'beforeNodePropertyChange');
+		$dispatcher->connect('TYPO3\TYPO3CR\Domain\Model\Node', 'nodePropertyChanged', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'nodePropertyChanged');
+
 		$dispatcher->connect('TYPO3\TYPO3CR\Domain\Model\Node', 'beforeNodeCopy', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'beforeNodeCopy');
 		$dispatcher->connect('TYPO3\TYPO3CR\Domain\Model\Node', 'nodeCopied', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'nodeCopied');
 

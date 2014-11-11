@@ -23,11 +23,18 @@
 				height: $dateSize;
 				background: $blue;
 				margin-left: (-$dateSize/2);
+				font-size:80%;
 			}
 		}
 
 		.neos-history-events {
 			width: 50%;
+
+			&::after {
+				border: 1px solid rgba(0,0,0,0);
+				content: "";
+				clear: both;
+			}
 
 			&.neos-history-events-left {
 				text-align: right;
@@ -58,6 +65,7 @@
 				clear: both;
 				position: relative;
 				padding-top: $relatedMargin;
+				padding-right: $defaultMargin;
 
 				.neos-history-event-user {
 					border-radius: 50%;

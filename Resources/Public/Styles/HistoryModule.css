@@ -17,9 +17,15 @@
   height: 40px;
   background: #00b5ff;
   margin-left: -20px;
+  font-size: 80%;
 }
 .neos-module-management-history .neos-history-day .neos-history-events {
   width: 50%;
+}
+.neos-module-management-history .neos-history-day .neos-history-events::after {
+  border: 1px solid transparent;
+  content: "";
+  clear: both;
 }
 .neos-module-management-history .neos-history-day .neos-history-events.neos-history-events-left {
   text-align: right;
@@ -47,6 +53,7 @@
   clear: both;
   position: relative;
   padding-top: 8px;
+  padding-right: 16px;
 }
 .neos-module-management-history .neos-history-day .neos-history-events .neos-history-event .neos-history-event-user {
   border-radius: 50%;

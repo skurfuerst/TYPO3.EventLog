@@ -11,6 +11,9 @@ namespace TYPO3\EventLog\Controller;
  * The TYPO3 project - inspiring people to share!                         *
  *                                                                        */
 
+use TYPO3\EventLog\Domain\Model\Event;
+use TYPO3\EventLog\Domain\Model\EventsOnDate;
+use TYPO3\EventLog\Domain\Model\NodeEvent;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\EventLog\Domain\Repository\EventRepository;
 
@@ -24,23 +27,23 @@ class HistoryModuleController extends \TYPO3\Neos\Controller\Module\AbstractModu
 
 	public function indexAction() {
 		$events = $this->eventRepository->findRelevantEvents()->toArray();
-		$events = array_reverse($events);
 
-		$processedEvents = array(
-			array_shift($events)
-		);
-
+		$eventsByDate = array();
 		foreach ($events as $event) {
-			$lastProcessedEvent = end($processedEvents);
-			if ($lastProcessedEvent->getEventType() === $event->getEventType() && $lastProcessedEvent->getTimestamp() == $event->getTimestamp()) {
-				$lastProcessedEvent->addSimilarEvent();
-			} else {
-				$processedEvents[] = $event;
+			if ($event instanceof NodeEvent && $event->getWorkspaceName() !== 'live') {
+				continue;
 			}
+			/* @var $event Event */
+			$day = $event->getTimestamp()->format('Y-m-d');
+			if (!isset($eventsByDate[$day])) {
+				$eventsByDate[$day] = new EventsOnDate($event->getTimestamp());
+			}
+
+			/* @var $eventsOnThisDay EventsOnDate */
+			$eventsOnThisDay = $eventsByDate[$day];
+			$eventsOnThisDay->add($event);
 		}
 
-		$processedEvents = array_reverse($processedEvents);
-
-		$this->view->assign('events', $processedEvents);
+		$this->view->assign('eventsByDate', $eventsByDate);
 	}
 }

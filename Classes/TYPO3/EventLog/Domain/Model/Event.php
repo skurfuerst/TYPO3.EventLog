@@ -54,7 +54,7 @@ class Event {
 	 *
 	 * @var array
 	 */
-	protected $data;
+	protected $data = array();
 
 	/**
 	 * The parent event, if exists. E.g. if a "move node" operation triggered a bunch of other events.

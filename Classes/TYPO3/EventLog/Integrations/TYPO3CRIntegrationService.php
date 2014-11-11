@@ -41,6 +41,7 @@ class TYPO3CRIntegrationService extends AbstractIntegrationService {
 
 	const NODE_ADDED = 'NODE_ADDED';
 	const NODE_UPDATED = 'NODE_UPDATED';
+	const NODE_LABEL_CHANGED = 'NODE_LABEL_CHANGED';
 	const NODE_REMOVED = 'NODE_REMOVED';
 	const DOCUMENT_PUBLISHED = 'NODE_PUBLISHED';
 	const NODE_COPY = 'NODE_COPY';
@@ -62,7 +63,7 @@ class TYPO3CRIntegrationService extends AbstractIntegrationService {
 		}
 	}
 
-	public function nodePropertyChanged(NodeInterface $node, $propertyName, $oldValue, $value) {
+	public function beforeNodePropertyChange(NodeInterface $node, $propertyName, $oldValue, $value) {
 		if ($oldValue === $value) {
 			return;
 		}
@@ -71,9 +72,20 @@ class TYPO3CRIntegrationService extends AbstractIntegrationService {
 				'node' => $node
 			);
 		}
+		if (!isset($this->changedNodes[$node->getContextPath()]['oldLabel'])) {
+			$this->changedNodes[$node->getContextPath()]['oldLabel'] = $node->getLabel();
+		}
 
 		$this->changedNodes[$node->getContextPath()]['old'][$propertyName] = $oldValue;
 		$this->changedNodes[$node->getContextPath()]['new'][$propertyName] = $value;
+	}
+
+	public function nodePropertyChanged(NodeInterface $node, $propertyName, $oldValue, $value) {
+		if ($oldValue === $value) {
+			return;
+		}
+
+		$this->changedNodes[$node->getContextPath()]['newLabel'] = $node->getLabel();
 	}
 
 	public function nodeRemoved(NodeInterface $node) {
@@ -89,7 +101,9 @@ class TYPO3CRIntegrationService extends AbstractIntegrationService {
 
 
 	public function nodeDiscarded(NodeInterface $node) {
-		$this->eventEmittingService->emit(self::NODE_DISCARDED, array('node' => $node->getContextPath()));
+		/* @var $nodeEvent NodeEvent */
+		$nodeEvent = $this->eventEmittingService->emit(self::NODE_DISCARDED, array(), 'TYPO3\EventLog\Domain\Model\NodeEvent');
+		$nodeEvent->setNode($node);
 	}
 
 	protected $currentlyCopying = FALSE;
@@ -147,6 +161,16 @@ class TYPO3CRIntegrationService extends AbstractIntegrationService {
 			$node = $data['node'];
 			unset($data['node']);
 			/* @var $nodeEvent NodeEvent */
+
+			if (isset($data['oldLabel']) && isset($data['newLabel'])) {
+				if ($data['oldLabel'] !== $data['newLabel']) {
+					$nodeEvent = $this->eventEmittingService->emit(self::NODE_LABEL_CHANGED, array('oldLabel' => $data['oldLabel'], 'newLabel' => $data['newLabel']), 'TYPO3\EventLog\Domain\Model\NodeEvent');
+					$nodeEvent->setNode($node);
+				}
+				unset($data['oldLabel']);
+				unset($data['newLabel']);
+			}
+
 			$nodeEvent = $this->eventEmittingService->emit(self::NODE_UPDATED, $data, 'TYPO3\EventLog\Domain\Model\NodeEvent');
 			$nodeEvent->setNode($node);
 		}
@@ -180,6 +204,7 @@ class TYPO3CRIntegrationService extends AbstractIntegrationService {
 			/* @var $nodeEvent NodeEvent */
 			$nodeEvent = $this->eventEmittingService->emit(self::DOCUMENT_PUBLISHED, array(), 'TYPO3\EventLog\Domain\Model\NodeEvent');
 			$nodeEvent->setNode($documentPublish['documentNode']);
+			$nodeEvent->setWorkspaceName($documentPublish['targetWorkspace']);
 			$this->persistenceManager->whitelistObject($nodeEvent);
 			$this->persistenceManager->persistAll(TRUE);
 
@@ -193,8 +218,6 @@ class TYPO3CRIntegrationService extends AbstractIntegrationService {
 				->setParameter('workspaceName', $documentPublish['workspaceName'])
 				->andWhere('e.documentNodeIdentifier = :documentNodeIdentifier')
 				->setParameter('documentNodeIdentifier', $documentPublish['documentNode']->getIdentifier())
-				->andWhere('e != :parentEvent')
-				->setParameter('parentEvent', $parentEventIdentifier)
 				->andWhere('e.eventType != :publishedEventType')
 				->setParameter('publishedEventType', self::DOCUMENT_PUBLISHED)
 			   ->getQuery()->execute();

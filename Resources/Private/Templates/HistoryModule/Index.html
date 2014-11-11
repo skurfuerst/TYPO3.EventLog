@@ -2,21 +2,24 @@
 {namespace history=TYPO3\EventLog\ViewHelpers}
 <link rel="stylesheet" href="../../../Public/Styles/HistoryModule.css" />
 <div class="neos-history">
-	<div class="neos-history-day">
-		<div class="neos-history-date"><div class="neos-history-date-inner">Nov 6</div></div>
-		<div class="neos-history-events neos-history-events-left">
-			<div class="neos-history-event">
-				<div class="neos-history-event-time">12:30</div>
-				<div class="neos-history-event-user">RL</div>
-				<div class="neos-history-event-description">Robert L. edited Article: <a href="#">Telling a story</a></div>
-			</div>
-			<div class="neos-history-event">
-				<div class="neos-history-event-time">10:30</div>
-				<div class="neos-history-event-user">SK</div>
-				<div class="neos-history-event-description">Sebastian K. created Page: <a href="#">Freeclimbing</a></div>
+
+	<f:for each="{eventsByDate}" as="eventsOnSingleDay" iteration="iteration">
+		<div class="neos-history-day">
+			<div class="neos-history-date"><div class="neos-history-date-inner">{eventsOnSingleDay.day -> f:format.date(format: 'M d')}</div></div>
+
+			<div class="neos-history-events {f:if(condition: iteration.isOdd, then: 'neos-history-events-left', else: 'neos-history-events-right')}">
+				<f:for each="{eventsOnSingleDay.events}" as="event">
+					<div class="neos-history-event">
+						<div class="neos-history-event-time">{event.timestamp -> f:format.date(format: 'H:i')}</div>
+						<div class="neos-history-event-user">{event.user -> history:userInitials()}</div>
+						<div class="neos-history-event-description"><f:render section="{event.eventType}" arguments="{event: event}" optional="TRUE" /></div>
+					</div>
+				</f:for>
 			</div>
 		</div>
-	</div>
+
+	</f:for>
+
 
 	<div class="neos-history-day">
 		<div class="neos-history-date"><div class="neos-history-date-inner">Nov 3</div></div>
@@ -35,35 +38,43 @@
 	</div>
 </div>
 
-
-<f:for each="{events}" as="event">
-
-	<div class="neos-history-group">
-		<!--{event.eventType}-->
-		<div class="neos-history-group-user">{event.user}</div>
-		<div class="neos-history-group-time">{event.timestamp -> f:format.date(forceLocale: true)}</div>
-		<f:render section="{event.eventType}" arguments="{event: event}" optional="TRUE" />
-		<f:if condition="{event.numberOfFollowingSimilarEvents}">
-			and {event.numberOfFollowingSimilarEvents} more
-		</f:if>
-	</div>
-	<hr />
-</f:for>
-
 <f:section name="NODE_PUBLISHED">
-	Published {event.data.documentNodeType}
+	{event.user -> history:userInitials(format: 'fullFirstName')}
+
+	<history:calculateSubEventForPublishing event="{event}">
+		<f:render section="subType_{subType}" arguments="{event: event, subEvent: subEvent}" />
+	</history:calculateSubEventForPublishing>
+</f:section>
+
+<f:section name="subType_adoptedDocument">
+	created {subEvent.data.targetDimensions -> history:renderDimensions()} of {event.data.documentNodeType -> history:labelForNodeType()} <f:render section="_nodeLink" arguments="{event: subEvent}" />
+</f:section>
+
+<f:section name="subType_changedContent">
+	changed content on {event.data.documentNodeType -> history:labelForNodeType()} <f:render section="_nodeLink" arguments="{event: event}" />
+</f:section>
+
+<f:section name="subType_documentLabelChanged">
+	renamed {event.data.documentNodeType -> history:labelForNodeType()} {subEvent.data.oldLabel} to <f:render section="_nodeLink" arguments="{event: event}" />
+</f:section>
+
+<f:section name="subType_updatedDocument">
+	updated(!) {event.data.documentNodeType -> history:labelForNodeType()} <f:render section="_nodeLink" arguments="{event: event}" />
+</f:section>
+
+
+<f:section name="subType_">
+	TODO did something on {event.data.documentNodeType -> history:labelForNodeType()} <f:render section="_nodeLink" arguments="{event: event}" />
+</f:section>
+
+
+<f:section name="_nodeLink">
 	<f:if condition="{event.node}">
 		<f:then>
-			<n:link.node node="{event.node}" />
+			<n:link.node node="{event.node}">{event.data.nodeLabel}</n:link.node>
 		</f:then>
 		<f:else>
 			<span title="This node has been removed in the meantime">{event.data.nodeLabel}</span>
 		</f:else>
 	</f:if>
-
-	<p>
-	<f:for each="{event.childEvents}" as="childEvent">
-		{childEvent.eventType}
-	</f:for>
-	</p>
 </f:section>

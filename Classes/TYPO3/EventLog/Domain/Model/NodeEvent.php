@@ -8,6 +8,7 @@
 
 namespace TYPO3\EventLog\Domain\Model;
 
+use TYPO3\EventLog\Integrations\TYPO3CRIntegrationService;
 use TYPO3\Flow\Annotations as Flow;
 use Doctrine\ORM\Mapping as ORM;
 use TYPO3\Flow\Persistence\PersistenceManagerInterface;
@@ -102,6 +103,13 @@ class NodeEvent extends Event {
 		}
 	}
 
+	/**
+	 * @param string $workspaceName
+	 */
+	public function setWorkspaceName($workspaceName) {
+		$this->workspaceName = $workspaceName;
+	}
+
 	public static function getClosestDocumentNode(NodeInterface $node) {
 		while ($node !== NULL && !$node->getNodeType()->isOfType('TYPO3.Neos:Document')) {
 			$node = $node->getParent();
@@ -129,4 +137,16 @@ class NodeEvent extends Event {
 
 		return $context->getNodeByIdentifier($this->nodeIdentifier);
 	}
+
+	/**
+	 * @return string
+	 */
+	public function getWorkspaceName() {
+		return $this->workspaceName;
+	}
+
+	public function isRelatedToDocumentNode() {
+		return $this->documentNodeIdentifier === $this->nodeIdentifier;
+	}
+
 } 
