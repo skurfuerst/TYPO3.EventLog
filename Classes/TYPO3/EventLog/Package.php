@@ -47,6 +47,9 @@ class Package extends BasePackage {
 		$dispatcher->connect('TYPO3\TYPO3CR\Domain\Repository\NodeDataRepository', 'repositoryObjectsPersisted', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'updateEventsAfterPublish');
 
 
+
+		$dispatcher->connect('TYPO3\Flow\Persistence\Doctrine\PersistenceManager', 'beforeAllObjectsPersist', 'TYPO3\EventLog\Integrations\UserIntegrationService', 'checkUserAddedOrModified');
+
 		/*$dispatcher->connect('TYPO3\Neos\Domain\Model\Site', 'siteChanged', $flushConfigurationCache);
 		$dispatcher->connect('TYPO3\Neos\Domain\Model\Site', 'siteChanged', 'TYPO3\Flow\Mvc\Routing\RouterCachingService', 'flushCaches');*/
 	}

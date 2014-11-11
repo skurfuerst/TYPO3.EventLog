@@ -13,7 +13,6 @@ namespace TYPO3\EventLog\Integrations;
 
 use Doctrine\ORM\EntityManager;
 use TYPO3\EventLog\Domain\Model\NodeEvent;
-use TYPO3\EventLog\Domain\Service\EventEmittingService;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Persistence\PersistenceManagerInterface;
 use TYPO3\TYPO3CR\Domain\Model\NodeInterface;
@@ -25,19 +24,7 @@ use TYPO3\TYPO3CR\Domain\Service\Context;
  *
  * @Flow\Scope("singleton")
  */
-class TYPO3CRIntegrationService {
-
-	/**
-	 * @Flow\Inject
-	 * @var EventEmittingService
-	 */
-	protected $eventEmittingService;
-
-	/**
-	 * @Flow\Inject
-	 * @var \TYPO3\Flow\Security\Context
-	 */
-	protected $securityContext;
+class TYPO3CRIntegrationService extends AbstractIntegrationService {
 
 	/**
 	 * @Flow\Inject
@@ -150,15 +137,6 @@ class TYPO3CRIntegrationService {
 		$this->currentlyAdopting--;
 		if ($this->currentlyAdopting === 0) {
 			$this->eventEmittingService->popContext();
-		}
-	}
-
-	protected function initUser() {
-		if ($this->securityContext->canBeInitialized()) {
-			$account = $this->securityContext->getAccount();
-			if ($account !== NULL) {
-				$this->eventEmittingService->setCurrentUser($account->getAccountIdentifier());
-			}
 		}
 	}
 
