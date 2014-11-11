@@ -1,0 +1,89 @@
+@import "../../../../TYPO3.Neos/Resources/Private/Styles/Constants";
+
+.neos-module-management-history {
+
+	$dateSize: $unit;
+
+	.neos-history {
+		max-width:700px;
+		margin: 0 auto;
+	}
+	.neos-history-day {
+
+		.neos-history-date {
+			margin-left: 50%;
+
+			.neos-history-date-inner {
+				text-align: center;
+				line-height: $dateSize;
+				overflow: hidden;
+
+				border-radius: 50%;
+				width: $dateSize;
+				height: $dateSize;
+				background: $blue;
+				margin-left: (-$dateSize/2);
+			}
+		}
+
+		.neos-history-events {
+			width: 50%;
+
+			&.neos-history-events-left {
+				text-align: right;
+				border-right: 2px solid $blue;
+
+				.neos-history-event-time {
+					position: absolute;
+					right: -40px;
+					width: 80px;
+					text-align: center;
+				}
+			}
+			&.neos-history-events-right {
+				text-align: left;
+				margin-left: 50%;
+				border-left: 2px solid $blue;
+
+				.neos-history-event-time {
+					position: absolute;
+					left: -40px;
+					width: 80px;
+					text-align: center;
+				}
+			}
+
+			.neos-history-event {
+				text-align: left;
+				clear: both;
+				position: relative;
+				padding-top: $relatedMargin;
+
+				.neos-history-event-user {
+					border-radius: 50%;
+					width: $unit;
+					height: $unit;
+					background: $blueDark;
+					overflow: hidden;
+					text-align: center;
+					line-height: $unit;
+					float: left;
+
+					margin-left:20px;
+					margin-right:20px;
+				}
+
+
+				.neos-history-event-description a {
+					text-decoration: underline;
+				}
+			}
+		}
+	}
+
+	.neos-history-group {
+		.neos-history-group-user {
+
+		}
+	}
+}

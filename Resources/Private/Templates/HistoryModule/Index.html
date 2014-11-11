@@ -1,10 +1,47 @@
 {namespace n=TYPO3\Neos\ViewHelpers}
 {namespace history=TYPO3\EventLog\ViewHelpers}
+<link rel="stylesheet" href="../../../Public/Styles/HistoryModule.css" />
+<div class="neos-history">
+	<div class="neos-history-day">
+		<div class="neos-history-date"><div class="neos-history-date-inner">Nov 6</div></div>
+		<div class="neos-history-events neos-history-events-left">
+			<div class="neos-history-event">
+				<div class="neos-history-event-time">12:30</div>
+				<div class="neos-history-event-user">RL</div>
+				<div class="neos-history-event-description">Robert L. edited Article: <a href="#">Telling a story</a></div>
+			</div>
+			<div class="neos-history-event">
+				<div class="neos-history-event-time">10:30</div>
+				<div class="neos-history-event-user">SK</div>
+				<div class="neos-history-event-description">Sebastian K. created Page: <a href="#">Freeclimbing</a></div>
+			</div>
+		</div>
+	</div>
+
+	<div class="neos-history-day">
+		<div class="neos-history-date"><div class="neos-history-date-inner">Nov 3</div></div>
+		<div class="neos-history-events neos-history-events-right">
+			<div class="neos-history-event">
+				<div class="neos-history-event-time">12:30</div>
+				<div class="neos-history-event-user">RL</div>
+				<div class="neos-history-event-description">Robert L. edited Article: <a href="#">Telling a story</a></div>
+			</div>
+			<div class="neos-history-event">
+				<div class="neos-history-event-time">10:30</div>
+				<div class="neos-history-event-user">SK</div>
+				<div class="neos-history-event-description">Sebastian K. created Page: <a href="#">Freeclimbing</a></div>
+			</div>
+		</div>
+	</div>
+</div>
+
+
 <f:for each="{events}" as="event">
-	<div style="clear:both;">
-		{event.eventType}
-		{event.user} <br />
-		{event.timestamp -> f:format.date(forceLocale: true)} <br />
+
+	<div class="neos-history-group">
+		<!--{event.eventType}-->
+		<div class="neos-history-group-user">{event.user}</div>
+		<div class="neos-history-group-time">{event.timestamp -> f:format.date(forceLocale: true)}</div>
 		<f:render section="{event.eventType}" arguments="{event: event}" optional="TRUE" />
 		<f:if condition="{event.numberOfFollowingSimilarEvents}">
 			and {event.numberOfFollowingSimilarEvents} more
