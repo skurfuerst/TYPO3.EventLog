@@ -1,15 +1,11 @@
 <?php
 
-use Behat\Behat\Context\ExtendedContextInterface;
-use Behat\Behat\Event\StepEvent;
-use Behat\Behat\Exception\PendingException;
 use TYPO3\EventLog\Domain\Model\Event;
 use TYPO3\Flow\Utility\Arrays;
 use Behat\Gherkin\Node\TableNode;
 use Behat\Gherkin\Node\PyStringNode;
 use PHPUnit_Framework_Assert as Assert;
 use Symfony\Component\Yaml\Yaml;
-use TYPO3\TYPO3CR\Service\PublishingServiceInterface;
 
 /**
  * A trait with shared step definitions for common use by other contexts

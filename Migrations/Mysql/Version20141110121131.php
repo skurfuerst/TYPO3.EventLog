@@ -5,7 +5,7 @@ use Doctrine\DBAL\Migrations\AbstractMigration,
 	Doctrine\DBAL\Schema\Schema;
 
 /**
- * Auto-generated Migration: Please modify to your need!
+ * Create initial table structure
  */
 class Version20141110121131 extends AbstractMigration {
 

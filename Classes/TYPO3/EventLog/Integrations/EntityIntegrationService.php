@@ -13,15 +13,9 @@ namespace TYPO3\EventLog\Integrations;
 
 use Doctrine\ORM\EntityManager;
 use TYPO3\Eel\CompilingEvaluator;
-use TYPO3\Eel\ProtectedContext;
 use TYPO3\Eel\Utility;
-use TYPO3\EventLog\Domain\Model\NodeEvent;
 use TYPO3\EventLog\Domain\Service\EventEmittingService;
 use TYPO3\Flow\Annotations as Flow;
-use TYPO3\Flow\Persistence\PersistenceManagerInterface;
-use TYPO3\TYPO3CR\Domain\Model\NodeInterface;
-use TYPO3\TYPO3CR\Domain\Model\Workspace;
-use TYPO3\TYPO3CR\Domain\Service\Context;
 
 /**
  * The repository for events

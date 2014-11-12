@@ -16,8 +16,9 @@ use TYPO3\EventLog\Domain\Model\EventsOnDate;
 use TYPO3\EventLog\Domain\Model\NodeEvent;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\EventLog\Domain\Repository\EventRepository;
+use TYPO3\Neos\Controller\Module\AbstractModuleController;
 
-class HistoryModuleController extends \TYPO3\Neos\Controller\Module\AbstractModuleController {
+class HistoryModuleController extends AbstractModuleController {
 
 	/**
 	 * @Flow\Inject
