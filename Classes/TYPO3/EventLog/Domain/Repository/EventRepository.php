@@ -12,7 +12,9 @@ namespace TYPO3\EventLog\Domain\Repository;
  *                                                                        */
 
 use TYPO3\Flow\Annotations as Flow;
+use TYPO3\Flow\Persistence\QueryInterface;
 use TYPO3\Flow\Persistence\Repository;
+use TYPO3\Flow\Persistence\RepositoryInterface;
 use TYPO3\Flow\Reflection\ObjectAccess;
 
 /**
@@ -21,6 +23,13 @@ use TYPO3\Flow\Reflection\ObjectAccess;
  * @Flow\Scope("singleton")
  */
 class EventRepository extends Repository {
+
+	/**
+	 * @var array
+	 */
+	protected $defaultOrderings = array(
+		'uid' => QueryInterface::ORDER_ASCENDING
+	);
 
 	public function findRelevantEvents() {
 

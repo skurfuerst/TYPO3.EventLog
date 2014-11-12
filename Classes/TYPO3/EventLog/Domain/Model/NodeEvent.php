@@ -83,11 +83,15 @@ class NodeEvent extends Event {
 		$this->workspaceName = $node->getContext()->getWorkspaceName();
 		$this->dimension = $node->getContext()->getDimensions();
 
+		$siteIdentifier = NULL;
+		if ($node->getContext()->getCurrentSite() !== NULL) {
+			$siteIdentifier = $this->persistenceManager->getIdentifierByObject($node->getContext()->getCurrentSite());
+		}
 		$this->data = Arrays::arrayMergeRecursiveOverrule($this->data, array(
 			'nodeContextPath' => $node->getContextPath(),
 			'nodeLabel' => $node->getLabel(),
 			'nodeType' => $node->getNodeType()->getName(),
-			'site' => $this->persistenceManager->getIdentifierByObject($node->getContext()->getCurrentSite())
+			'site' => $siteIdentifier
 		));
 
 
@@ -111,7 +115,7 @@ class NodeEvent extends Event {
 	}
 
 	public static function getClosestDocumentNode(NodeInterface $node) {
-		while ($node !== NULL && !$node->getNodeType()->isOfType('TYPO3.Neos:Document')) {
+		while ($node !== NULL && !$node->getNodeType()->isAggregate()) {
 			$node = $node->getParent();
 		}
 		return $node;
@@ -148,5 +152,21 @@ class NodeEvent extends Event {
 	public function isRelatedToDocumentNode() {
 		return $this->documentNodeIdentifier === $this->nodeIdentifier;
 	}
+
+	/**
+	 * @return string
+	 */
+	public function getDocumentNodeIdentifier() {
+		return $this->documentNodeIdentifier;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getNodeIdentifier() {
+		return $this->nodeIdentifier;
+	}
+
+
 
 } 
