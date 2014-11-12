@@ -167,6 +167,7 @@ class NodeEvent extends Event {
 		return $this->nodeIdentifier;
 	}
 
-
-
+	public function __toString() {
+		return sprintf('NodeEvent[%s, %s]', $this->eventType, $this->nodeIdentifier);
+	}
 } 

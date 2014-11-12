@@ -1,4 +1,4 @@
-Feature: Editing Content in User Workspace
+Feature: Editing Nodes
   As an API user of the history
   I expect that changing a node triggers history updates
 
@@ -10,7 +10,7 @@ Feature: Editing Content in User Workspace
     And I have an empty history
 
   @fixtures
-  Scenario: Change a node property in the live workspace (e.g. like an API)
+  Scenario: Change a Document node property in the live workspace (e.g. like an API)
     When I get a node by path "/sites/typo3cr" with the following context:
       | Workspace |
       | live      |
@@ -20,7 +20,7 @@ Feature: Editing Content in User Workspace
       | NODE_UPDATED | fd5ba6e1-4313-b145-1004-dad2f1173a35 | fd5ba6e1-4313-b145-1004-dad2f1173a35 | live      |
 
   @fixtures
-  Scenario: Change a node property inside a workspace
+  Scenario: Change a Document node property inside a workspace
     When I get a node by path "/sites/typo3cr" with the following context:
       | Workspace  |
       | user-admin |
@@ -30,7 +30,7 @@ Feature: Editing Content in User Workspace
       | NODE_UPDATED | fd5ba6e1-4313-b145-1004-dad2f1173a35 | fd5ba6e1-4313-b145-1004-dad2f1173a35 | user-admin |
 
   @fixtures
-  Scenario: Change a node property inside a workspace, and publishing afterwards adds the update event to the publish event.
+  Scenario: Change a Document node property inside a workspace, and publishing afterwards adds the update event to the publish event.
     When I get a node by path "/sites/typo3cr" with the following context:
       | Workspace  |
       | user-admin |

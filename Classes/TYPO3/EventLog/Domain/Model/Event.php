@@ -11,6 +11,7 @@ namespace TYPO3\EventLog\Domain\Model;
  * The TYPO3 project - inspiring people to share!                         *
  *                                                                        */
 
+use Doctrine\Common\Collections\ArrayCollection;
 use TYPO3\Flow\Annotations as Flow;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -65,8 +66,8 @@ class Event {
 	protected $parentEvent;
 
 	/**
-	 * @var array<TYPO3\EventLog\Domain\Model\Event>
-	 * @ORM\OneToMany(targetEntity="TYPO3\EventLog\Domain\Model\Event", mappedBy="parentEvent")
+	 * @var ArrayCollection<TYPO3\EventLog\Domain\Model\Event>
+	 * @ORM\OneToMany(targetEntity="TYPO3\EventLog\Domain\Model\Event", mappedBy="parentEvent", cascade="persist")
 	 */
 	protected $childEvents;
 
@@ -82,6 +83,12 @@ class Event {
 		$this->data = $data;
 		$this->user = $user;
 		$this->parentEvent = $parentEvent;
+
+		$this->childEvents = new ArrayCollection();
+
+		if ($this->parentEvent !== NULL) {
+			$parentEvent->addChildEvent($this);
+		}
 	}
 
 	/**
@@ -135,5 +142,9 @@ class Event {
 	 */
 	public function getChildEvents() {
 		return $this->childEvents;
+	}
+
+	protected function addChildEvent(Event $childEvent) {
+		$this->childEvents->add($childEvent);
 	}
 }

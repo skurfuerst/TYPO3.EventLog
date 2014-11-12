@@ -56,7 +56,7 @@ class TYPO3CRIntegrationService extends AbstractIntegrationService {
 	public function beforeNodeCreate() {
 		var_dump("beforeNodeAdd");
 		/* @var $nodeEvent NodeEvent */
-		$nodeEvent = $this->eventEmittingService->emit(self::NODE_ADDED, array(), 'TYPO3\EventLog\Domain\Model\NodeEvent');
+		$nodeEvent = $this->eventEmittingService->generate(self::NODE_ADDED, array(), 'TYPO3\EventLog\Domain\Model\NodeEvent');
 		$this->currentNodeAddEvents[] = $nodeEvent;
 		$this->eventEmittingService->pushContext($nodeEvent);
 	}
@@ -67,8 +67,7 @@ class TYPO3CRIntegrationService extends AbstractIntegrationService {
 		$nodeEvent = array_pop($this->currentNodeAddEvents);
 		$nodeEvent->setNode($node);
 		$this->eventEmittingService->popContext();
-		// not fully sure why this is needed... but if it helps
-		$this->eventEmittingService->update($nodeEvent);
+		$this->eventEmittingService->add($nodeEvent);
 	}
 	public function nodeUpdated(NodeInterface $node) {
 		if (!isset($this->changedNodes[$node->getContextPath()])) {
@@ -79,6 +78,10 @@ class TYPO3CRIntegrationService extends AbstractIntegrationService {
 	}
 
 	public function beforeNodePropertyChange(NodeInterface $node, $propertyName, $oldValue, $value) {
+		if (count($this->currentNodeAddEvents) > 0) {
+			// add is currently running, during that; we do not want any update events
+			return;
+		}
 		if ($oldValue === $value) {
 			return;
 		}
@@ -170,6 +173,11 @@ class TYPO3CRIntegrationService extends AbstractIntegrationService {
 	}
 
 	public function generateNodeEvents() {
+
+		if (count($this->currentNodeAddEvents) > 0) {
+			return;
+		}
+
 		$this->initUser();
 
 		foreach ($this->changedNodes as $nodePath => $data) {

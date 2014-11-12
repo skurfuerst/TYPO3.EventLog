@@ -38,57 +38,89 @@ trait HistoryDefinitionsTrait {
 	}
 
 	/**
-	 * @Then /^I should have the following history entries:$/
+	 * @Then /^I should have the following history entries(| \(ignoring order\)):$/
 	 * @param TableNode $table
 	 */
-	public function iShouldHaveTheFollowingHistoryEntries(TableNode $table) {
+	public function iShouldHaveTheFollowingHistoryEntries($ignoringOrder, TableNode $table) {
 
 		$allEvents = $this->getEventRepository()->findAll()->toArray();
 		$eventsByInternalId = array();
 		$unmatchedParentEvents = array();
 
-		foreach ($table->getHash() as $i => $row) {
-			$event = $allEvents[$i];
-			/* @var $event \TYPO3\EventLog\Domain\Model\NodeEvent */
-			foreach ($row as $rowName => $rowValue) {
-				switch ($rowName) {
-					case 'ID':
-						if ($rowValue === '') break;
-						$eventsByInternalId[$rowValue] = $event;
-						if (isset($unmatchedParentEvents[$rowValue])) {
-							Assert::assertSame($eventsByInternalId[$rowValue], $event, 'Parent event does not match. (2)');
-							unset($unmatchedParentEvents[$rowValue]);
-						}
-						break;
-					case 'Parent Event':
-						if ($rowValue === '') break;
-						if (isset($eventsByInternalId[$rowValue])) {
-							Assert::assertSame($eventsByInternalId[$rowValue], $event->getParentEvent(), 'Parent event does not match. (1)');
-						} else {
-							$unmatchedParentEvents[$rowValue] = $event->getParentEvent();
-						}
-						break;
-					case 'Event Type':
-						Assert::assertEquals($rowValue, $event->getEventType(), 'Event Type does not match. Expected: ' . $rowValue . '. Actual: ' . $event->getEventType());
-						break;
-					case 'Node Identifier':
-						if ($rowValue === '') break;
-						Assert::assertEquals($rowValue, $event->getNodeIdentifier(), 'Node Identifier does not match.');
-						break;
-					case 'Document Node Identifier':
-						Assert::assertEquals($rowValue, $event->getDocumentNodeIdentifier(), 'Document Node Identifier does not match.');
-						break;
-					case 'Workspace':
-						Assert::assertEquals($rowValue, $event->getWorkspaceName(), 'Workspace does not match.');
-						break;
-					default:
-						throw new \Exception('Row Name ' . $rowName . ' not supported.');
+
+		if ($ignoringOrder) {
+			foreach ($table->getHash() as $i => $row) {
+				foreach ($allEvents as $event) {
+					try {
+						$this->checkSingleEvent($row, $event, $eventsByInternalId, $unmatchedParentEvents);
+						// no exception thrown so far, so that means there is an $event which fits to the current expectation row $i. Thus, we continue in the next iteration.
+						continue 2;
+					} catch (PHPUnit_Framework_ExpectationFailedException $assertionFailed) {
+						// do nothing, we just retry the row on the next event.
+					}
 				}
+
+				// If we are that far, there was no match for the current row:
+				Assert::fail('There was no match for row: ' . json_encode($row));
+
+			}
+		} else {
+			foreach ($table->getHash() as $i => $row) {
+				$event = $allEvents[$i];
+				$this->checkSingleEvent($row, $event, $eventsByInternalId, $unmatchedParentEvents);
 			}
 		}
 
 		Assert::assertEquals(count($table->getHash()), count($allEvents), 'Number of expected events does not match total number of events.');
 		Assert::assertEmpty($unmatchedParentEvents, 'Unmatched parent events found');
+	}
+
+	protected function checkSingleEvent($expected, Event $event, &$eventsByInternalId, &$unmatchedParentEvents) {
+		/* @var $event \TYPO3\EventLog\Domain\Model\NodeEvent */
+		$rowId = NULL;
+		foreach ($expected as $rowName => $rowValue) {
+			switch ($rowName) {
+				case 'ID':
+					if ($rowValue === '') break;
+					$rowId = $rowValue;
+					break;
+				case 'Parent Event':
+					if ($rowValue === '') break;
+					if (isset($eventsByInternalId[$rowValue])) {
+						Assert::assertSame($eventsByInternalId[$rowValue], $event->getParentEvent(), 'Parent event does not match. (1)');
+					} elseif (isset($unmatchedParentEvents[$rowValue]) && $unmatchedParentEvents[$rowValue] !== $event->getParentEvent()) {
+						Assert::fail(sprintf('Parent event "%s" does not match another parent event with the same identifier.', $rowValue));
+					} else {
+						$unmatchedParentEvents[$rowValue] = $event->getParentEvent();
+					}
+					break;
+				case 'Event Type':
+					Assert::assertEquals($rowValue, $event->getEventType(), 'Event Type does not match. Expected: ' . $rowValue . '. Actual: ' . $event->getEventType());
+					break;
+				case 'Node Identifier':
+					if ($rowValue === '') break;
+					Assert::assertEquals($rowValue, $event->getNodeIdentifier(), 'Node Identifier does not match.');
+					break;
+				case 'Document Node Identifier':
+					Assert::assertEquals($rowValue, $event->getDocumentNodeIdentifier(), 'Document Node Identifier does not match.');
+					break;
+				case 'Workspace':
+					Assert::assertEquals($rowValue, $event->getWorkspaceName(), 'Workspace does not match.');
+					break;
+				case 'Explanation':
+					break;
+				default:
+					throw new \Exception('Row Name ' . $rowName . ' not supported.');
+			}
+		}
+
+		if ($rowId !== NULL) {
+			$eventsByInternalId[$rowId] = $event;
+			if (isset($unmatchedParentEvents[$rowId])) {
+				Assert::assertSame($eventsByInternalId[$rowId], $event, 'Parent event does not match. (2)');
+				unset($unmatchedParentEvents[$rowId]);
+			}
+		}
 	}
 
 	/**

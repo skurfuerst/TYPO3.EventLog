@@ -22,7 +22,7 @@ use TYPO3\Flow\Annotations as Flow;
  */
 class EventEmittingService {
 
-	protected $lastEmittedEvent;
+	protected $lastGeneratedEvent;
 
 	protected $eventContext = array();
 
@@ -38,11 +38,11 @@ class EventEmittingService {
 	protected $eventRepository;
 
 	public function pushContext() {
-		if ($this->lastEmittedEvent === NULL) {
+		if ($this->lastGeneratedEvent === NULL) {
 			throw new \InvalidArgumentException('pushContext() can only be called directly after an invocation of emit().', 1415353980);
 		}
 
-		$this->eventContext[] = $this->lastEmittedEvent;
+		$this->eventContext[] = $this->lastGeneratedEvent;
 	}
 
 	public function popContext() {
@@ -60,11 +60,16 @@ class EventEmittingService {
 		$this->currentUser = $currentUser;
 	}
 
+	public function generate($eventType, array $data, $eventClassName = 'TYPO3\EventLog\Domain\Model\Event') {
+		$event = new $eventClassName($eventType, $data, $this->currentUser, $this->getCurrentContext());
+		$this->lastGeneratedEvent = $event;
+
+		return $event;
+	}
 
 	public function emit($eventType, array $data, $eventClassName = 'TYPO3\EventLog\Domain\Model\Event') {
-		$event = new $eventClassName($eventType, $data, $this->currentUser, $this->getCurrentContext());
-		$this->eventRepository->add($event);
-		$this->lastEmittedEvent = $event;
+		$event = $this->generate($eventType, $data, $eventClassName);
+		$this->add($event);
 
 		return $event;
 	}
@@ -77,7 +82,16 @@ class EventEmittingService {
 		}
 	}
 
-	public function update($nodeEvent) {
-		$this->eventRepository->update($nodeEvent);
+	public function update(Event $nodeEvent) {
+		if ($nodeEvent->getParentEvent() === NULL) {
+			$this->eventRepository->update($nodeEvent);
+		}
+	}
+
+	public function add(Event $nodeEvent) {
+		if ($nodeEvent->getParentEvent() === NULL) {
+			$this->eventRepository->add($nodeEvent);
+		}
+
 	}
 }
