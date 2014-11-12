@@ -54,7 +54,6 @@ class TYPO3CRIntegrationService extends AbstractIntegrationService {
 
 
 	public function beforeNodeCreate() {
-		var_dump("beforeNodeAdd");
 		/* @var $nodeEvent NodeEvent */
 		$nodeEvent = $this->eventEmittingService->generate(self::NODE_ADDED, array(), 'TYPO3\EventLog\Domain\Model\NodeEvent');
 		$this->currentNodeAddEvents[] = $nodeEvent;
@@ -62,7 +61,6 @@ class TYPO3CRIntegrationService extends AbstractIntegrationService {
 	}
 
 	public function afterNodeCreation(NodeInterface $node) {
-		var_dump("nodeAdded");
 		/* @var $nodeEvent NodeEvent */
 		$nodeEvent = array_pop($this->currentNodeAddEvents);
 		$nodeEvent->setNode($node);
@@ -194,8 +192,10 @@ class TYPO3CRIntegrationService extends AbstractIntegrationService {
 				unset($data['newLabel']);
 			}
 
-			$nodeEvent = $this->eventEmittingService->emit(self::NODE_UPDATED, $data, 'TYPO3\EventLog\Domain\Model\NodeEvent');
-			$nodeEvent->setNode($node);
+			if (!empty($data)) {
+				$nodeEvent = $this->eventEmittingService->emit(self::NODE_UPDATED, $data, 'TYPO3\EventLog\Domain\Model\NodeEvent');
+				$nodeEvent->setNode($node);
+			}
 		}
 
 		$this->changedNodes = array();
@@ -205,7 +205,6 @@ class TYPO3CRIntegrationService extends AbstractIntegrationService {
 	protected $scheduledNodeEventUpdates = array();
 
 	public function afterNodePublishing(NodeInterface $node, Workspace $targetWorkspace) {
-		var_dump("afterPublish1");
 		$documentNode = NodeEvent::getClosestDocumentNode($node);
 
 		if ($documentNode === NULL) {
