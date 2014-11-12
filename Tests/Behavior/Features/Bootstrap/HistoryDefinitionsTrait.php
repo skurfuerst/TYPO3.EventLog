@@ -66,6 +66,9 @@ trait HistoryDefinitionsTrait {
 			}
 		} else {
 			foreach ($table->getHash() as $i => $row) {
+				if (!isset($allEvents[$i])) {
+					Assert::fail(sprintf('Only %s events found, while the expected table contains %s events.', count($allEvents), count($table->getHash())));
+				}
 				$event = $allEvents[$i];
 				$this->checkSingleEvent($row, $event, $eventsByInternalId, $unmatchedParentEvents);
 			}
@@ -129,10 +132,48 @@ trait HistoryDefinitionsTrait {
 	protected function getEventRepository() {
 		return $this->getObjectManager()->get('TYPO3\EventLog\Domain\Repository\EventRepository');
 	}
+
 	/**
 	 * @return \TYPO3\EventLog\Integrations\TYPO3CRIntegrationService
 	 */
 	protected function getTYPO3CRIntegrationService() {
 		return $this->getObjectManager()->get('TYPO3\EventLog\Integrations\TYPO3CRIntegrationService');
+	}
+
+
+
+
+
+	/**
+	 * @Given /^I have the following EntityIntegration Configuration:$/
+	 */
+	public function iHaveTheFollowingEntityintegrationConfiguration(PyStringNode $string) {
+		$configuration = Yaml::parse($string->getRaw());
+		/* @var $entityIntegrationService \TYPO3\EventLog\Integrations\EntityIntegrationService */
+		$entityIntegrationService = $this->getObjectManager()->get('TYPO3\EventLog\Integrations\EntityIntegrationService');
+		$entityIntegrationService->injectSettings($configuration);
+	}
+
+	/**
+	 * @When /^I create the following accounts:$/
+	 */
+	public function iCreateTheFollowingAccounts(TableNode $table) {
+		foreach ($table->getHash() as $row) {
+			$user = $this->getObjectManager()->get('TYPO3\Neos\Domain\Factory\UserFactory')->create(
+				$row['User'],
+				$row['Password'],
+				$row['First Name'],
+				$row['Last Name'],
+				Arrays::trimExplode(',', $row['Roles'])
+			);
+
+			$this->getObjectManager()->get('TYPO3\Party\Domain\Repository\PartyRepository')->add($user);
+			$accounts = $user->getAccounts();
+			foreach ($accounts as $account) {
+				$this->getObjectManager()->get('TYPO3\Flow\Security\AccountRepository')->add($account);
+			}
+		}
+
+		$this->getSubcontext('flow')->persistAll();
 	}
 }
