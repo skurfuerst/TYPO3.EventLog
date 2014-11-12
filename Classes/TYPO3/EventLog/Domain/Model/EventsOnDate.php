@@ -12,6 +12,9 @@ namespace TYPO3\EventLog\Domain\Model;
  *                                                                        */
 
 
+/**
+ * Helper Model which groups a number of events on a given day. Used especially in the view.
+ */
 class EventsOnDate {
 
 	/**
@@ -19,12 +22,23 @@ class EventsOnDate {
 	 */
 	protected $day;
 
+	/**
+	 * @var array<Event>
+	 */
 	protected $events = array();
 
+	/**
+	 * @param \DateTime $day
+	 */
 	public function __construct(\DateTime $day) {
 		$this->day = $day;
 	}
 
+	/**
+	 * add another event to this group
+	 *
+	 * @param Event $event
+	 */
 	public function add(Event $event) {
 		$this->events[] = $event;
 	}
@@ -42,4 +56,4 @@ class EventsOnDate {
 	public function getDay() {
 		return $this->day;
 	}
-} 
+}

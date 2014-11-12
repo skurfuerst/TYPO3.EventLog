@@ -16,12 +16,13 @@ use TYPO3\Flow\Annotations as Flow;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * A basic event
+ * Base class for generic events
  *
  * @Flow\Entity
  * @ORM\InheritanceType("SINGLE_TABLE")
  */
 class Event {
+
 	/**
 	 * When was this event?
 	 *
@@ -30,13 +31,15 @@ class Event {
 	protected $timestamp;
 
 	/**
+	 * We introduce an auto_increment column to be able to sort events at the same timestamp
+	 *
 	 * @ORM\Column(columnDefinition="INT(11) NOT NULL AUTO_INCREMENT UNIQUE")
 	 * @var integer
 	 */
 	protected $uid;
 
 	/**
-	 * What was this event about? A string constant describing this. Required.
+	 * What was this event about? Is a required string constant.
 	 *
 	 * @var string
 	 */
@@ -51,14 +54,14 @@ class Event {
 	protected $user;
 
 	/**
-	 * Payload of the event. TODO: externalize to new object.
+	 * Payload of the event.
 	 *
 	 * @var array
 	 */
 	protected $data = array();
 
 	/**
-	 * The parent event, if exists. E.g. if a "move node" operation triggered a bunch of other events.
+	 * The parent event, if exists. E.g. if a "move node" operation triggered a bunch of other events, or a "publish"
 	 *
 	 * @var Event
 	 * @ORM\ManyToOne
@@ -66,17 +69,21 @@ class Event {
 	protected $parentEvent;
 
 	/**
+	 * Child events, of this event
+	 *
 	 * @var ArrayCollection<TYPO3\EventLog\Domain\Model\Event>
 	 * @ORM\OneToMany(targetEntity="TYPO3\EventLog\Domain\Model\Event", mappedBy="parentEvent", cascade="persist")
 	 */
 	protected $childEvents;
 
 	/**
-	 * @Flow\Transient
-	 * @var integer
+	 * Create a new event
+	 *
+	 * @param string $eventType
+	 * @param array $data
+	 * @param string $user
+	 * @param Event $parentEvent
 	 */
-	protected $numberOfFollowingSimilarEvents = 0;
-
 	function __construct($eventType, $data, $user = NULL, Event $parentEvent = NULL) {
 		$this->timestamp = new \DateTime();
 		$this->eventType = $eventType;
@@ -92,24 +99,10 @@ class Event {
 	}
 
 	/**
-	 * @return object
-	 */
-	public function getData() {
-		return $this->data;
-	}
-
-	/**
 	 * @return string
 	 */
 	public function getEventType() {
 		return $this->eventType;
-	}
-
-	/**
-	 * @return Event
-	 */
-	public function getParentEvent() {
-		return $this->parentEvent;
 	}
 
 	/**
@@ -120,21 +113,24 @@ class Event {
 	}
 
 	/**
+	 * @return array
+	 */
+	public function getData() {
+		return $this->data;
+	}
+
+	/**
 	 * @return string
 	 */
 	public function getUser() {
 		return $this->user;
 	}
 
-	public function addSimilarEvent() {
-		$this->numberOfFollowingSimilarEvents++;
-	}
-
 	/**
-	 * @return int
+	 * @return Event
 	 */
-	public function getNumberOfFollowingSimilarEvents() {
-		return $this->numberOfFollowingSimilarEvents;
+	public function getParentEvent() {
+		return $this->parentEvent;
 	}
 
 	/**
@@ -144,6 +140,11 @@ class Event {
 		return $this->childEvents;
 	}
 
+	/**
+	 * Add a new child event. is called from the child event's constructor.
+	 *
+	 * @param Event $childEvent
+	 */
 	protected function addChildEvent(Event $childEvent) {
 		$this->childEvents->add($childEvent);
 	}

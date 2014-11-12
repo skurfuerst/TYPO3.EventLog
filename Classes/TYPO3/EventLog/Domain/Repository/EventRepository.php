@@ -30,8 +30,13 @@ class EventRepository extends Repository {
 		'uid' => QueryInterface::ORDER_ASCENDING
 	);
 
+	/**
+	 * Find all events which are "top-level", i.e. do not have a parent event.
+	 *
+	 * @return \TYPO3\Flow\Persistence\QueryResultInterface
+	 * @throws \TYPO3\Flow\Reflection\Exception\PropertyNotAccessibleException
+	 */
 	public function findRelevantEvents() {
-
 		$q = $this->createQuery();
 		// workaround: query should have a getQueryBuilder() method.
 		/* @var $qb \Doctrine\ORM\QueryBuilder */
@@ -46,6 +51,9 @@ class EventRepository extends Repository {
 		return $q->execute();
 	}
 
+	/**
+	 * Remove all events without checking foreign keys. Needed for clearing the table during tests.
+	 */
 	public function removeAll() {
 		$cmd = $this->entityManager->getClassMetadata($this->getEntityClassName());
 		$connection = $this->entityManager->getConnection();

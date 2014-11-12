@@ -18,7 +18,9 @@ use TYPO3\EventLog\Domain\Service\EventEmittingService;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
- * The repository for events
+ * Monitors entity changes
+ *
+ * TODO: Update/Delete of Entities
  *
  * @Flow\Scope("singleton")
  */
@@ -50,10 +52,16 @@ class EntityIntegrationService extends AbstractIntegrationService {
 	 */
 	protected $settings;
 
+	/**
+	 * @param array $settings
+	 */
 	public function injectSettings(array $settings) {
 		$this->settings = $settings;
 	}
 
+	/**
+	 * This slot is called directly before PersistenceManager::persist is executed.
+	 */
 	public function beforeAllObjectsPersist() {
 		/* @var $entityManager EntityManager */
 		$entityManager = $this->entityManager;
@@ -63,7 +71,7 @@ class EntityIntegrationService extends AbstractIntegrationService {
 
 				foreach ($entities as $entityToPersist) {
 					if (isset($entityMonitoringConfiguration['events']['created']) && $entityManager->getUnitOfWork()->isScheduledForInsert($entityToPersist)) {
-						$this->initUser();
+						$this->initializeUser();
 						$data = array();
 						foreach ($entityMonitoringConfiguration['data'] as $key => $eelExpression) {
 							$data[$key] = Utility::evaluateEelExpression($eelExpression, $this->eelEvaluator, array('entity' => $entityToPersist));

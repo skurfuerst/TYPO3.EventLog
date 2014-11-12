@@ -16,13 +16,11 @@ use TYPO3\Flow\Annotations as Flow;
 
 abstract class AbstractIntegrationService {
 
-
 	/**
 	 * @Flow\Inject
 	 * @var \TYPO3\Flow\Security\Context
 	 */
 	protected $securityContext;
-
 
 	/**
 	 * @Flow\Inject
@@ -30,7 +28,10 @@ abstract class AbstractIntegrationService {
 	 */
 	protected $eventEmittingService;
 
-	protected function initUser() {
+	/**
+	 * Try to set the current user who emits the events, if possible
+	 */
+	protected function initializeUser() {
 		if ($this->securityContext->canBeInitialized()) {
 			$account = $this->securityContext->getAccount();
 			if ($account !== NULL) {
@@ -38,5 +39,4 @@ abstract class AbstractIntegrationService {
 			}
 		}
 	}
-
-} 
+}

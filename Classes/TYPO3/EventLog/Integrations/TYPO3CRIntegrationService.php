@@ -148,7 +148,7 @@ class TYPO3CRIntegrationService extends AbstractIntegrationService {
 
 	protected $currentlyAdopting = 0;
 	public function beforeAdoptNode(NodeInterface $node, Context $context, $recursive) {
-		$this->initUser();
+		$this->initializeUser();
 		if ($this->currentlyAdopting === 0) {
 			/* @var $nodeEvent NodeEvent */
 			$nodeEvent = $this->eventEmittingService->emit(self::NODE_ADOPT, array(
@@ -176,7 +176,7 @@ class TYPO3CRIntegrationService extends AbstractIntegrationService {
 			return;
 		}
 
-		$this->initUser();
+		$this->initializeUser();
 
 		foreach ($this->changedNodes as $nodePath => $data) {
 			$node = $data['node'];
@@ -205,7 +205,7 @@ class TYPO3CRIntegrationService extends AbstractIntegrationService {
 	protected $scheduledNodeEventUpdates = array();
 
 	public function afterNodePublishing(NodeInterface $node, Workspace $targetWorkspace) {
-		$documentNode = NodeEvent::getClosestDocumentNode($node);
+		$documentNode = NodeEvent::getClosestAggregateNode($node);
 
 		if ($documentNode === NULL) {
 			return;

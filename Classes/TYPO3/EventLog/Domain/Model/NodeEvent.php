@@ -21,29 +21,11 @@ use TYPO3\TYPO3CR\Domain\Model\NodeInterface;
 use TYPO3\TYPO3CR\Domain\Service\ContextFactoryInterface;
 
 /**
- * Class NodeEvent
+ * A specific event which is used for TYPO3CR Nodes (i.e. content).
  *
  * @Flow\Entity
  */
 class NodeEvent extends Event {
-
-	/**
-	 * @Flow\Inject
-	 * @var ContextFactoryInterface
-	 */
-	protected $contextFactory;
-
-	/**
-	 * @Flow\Inject
-	 * @var PersistenceManagerInterface
-	 */
-	protected $persistenceManager;
-
-	/**
-	 * @Flow\Inject
-	 * @var SiteRepository
-	 */
-	protected $siteRepository;
 
 	/**
 	 * the node identifier which was created/modified/...
@@ -79,70 +61,25 @@ class NodeEvent extends Event {
 	 */
 	protected $userService;
 
-
-	public function setNode(NodeInterface $node) {
-		$this->nodeIdentifier = $node->getIdentifier();
-		$this->workspaceName = $node->getContext()->getWorkspaceName();
-		$this->dimension = $node->getContext()->getDimensions();
-
-		$siteIdentifier = NULL;
-		if ($node->getContext()->getCurrentSite() !== NULL) {
-			$siteIdentifier = $this->persistenceManager->getIdentifierByObject($node->getContext()->getCurrentSite());
-		}
-		$this->data = Arrays::arrayMergeRecursiveOverrule($this->data, array(
-			'nodeContextPath' => $node->getContextPath(),
-			'nodeLabel' => $node->getLabel(),
-			'nodeType' => $node->getNodeType()->getName(),
-			'site' => $siteIdentifier
-		));
-
-
-		$node = self::getClosestDocumentNode($node);
-
-		if ($node !== NULL) {
-			$this->documentNodeIdentifier = $node->getIdentifier();
-			$this->data = Arrays::arrayMergeRecursiveOverrule($this->data, array(
-				'documentNodeContextPath' => $node->getContextPath(),
-				'documentNodeLabel' => $node->getLabel(),
-				'documentNodeType' => $node->getNodeType()->getName()
-			));
-		}
-	}
+	/**
+	 * @Flow\Inject
+	 * @var ContextFactoryInterface
+	 */
+	protected $contextFactory;
 
 	/**
-	 * @param string $workspaceName
+	 * @Flow\Inject
+	 * @var PersistenceManagerInterface
 	 */
-	public function setWorkspaceName($workspaceName) {
-		$this->workspaceName = $workspaceName;
-	}
+	protected $persistenceManager;
 
-	public static function getClosestDocumentNode(NodeInterface $node) {
-		while ($node !== NULL && !$node->getNodeType()->isAggregate()) {
-			$node = $node->getParent();
-		}
-		return $node;
-	}
+	/**
+	 * @Flow\Inject
+	 * @var SiteRepository
+	 */
+	protected $siteRepository;
 
-	public function getDocumentNode() {
-		$context = $this->contextFactory->create(array(
-			'workspaceName' => $this->userService->getCurrentWorkspace()->getName(),
-	 		'dimensions' => $this->dimension,
-			'currentSite' => $this->siteRepository->findByIdentifier($this->data['site']),
-			'invisibleContentShown' => TRUE
-		));
-		return $context->getNodeByIdentifier($this->documentNodeIdentifier);
-	}
 
-	public function getNode() {
-		$context = $this->contextFactory->create(array(
-			'workspaceName' => $this->userService->getCurrentWorkspace()->getName(),
-			'dimensions' => $this->dimension,
-			'currentSite' => $this->siteRepository->findByIdentifier($this->data['site']),
-			'invisibleContentShown' => TRUE
-		));
-
-		return $context->getNodeByIdentifier($this->nodeIdentifier);
-	}
 
 	/**
 	 * @return string
@@ -169,6 +106,89 @@ class NodeEvent extends Event {
 		return $this->nodeIdentifier;
 	}
 
+	/**
+	 * Set the "context node" this operation was working on.
+	 *
+	 * @param NodeInterface $node
+	 */
+	public function setNode(NodeInterface $node) {
+		$this->nodeIdentifier = $node->getIdentifier();
+		$this->workspaceName = $node->getContext()->getWorkspaceName();
+		$this->dimension = $node->getContext()->getDimensions();
+
+		$siteIdentifier = NULL;
+		if ($node->getContext()->getCurrentSite() !== NULL) {
+			$siteIdentifier = $this->persistenceManager->getIdentifierByObject($node->getContext()->getCurrentSite());
+		}
+		$this->data = Arrays::arrayMergeRecursiveOverrule($this->data, array(
+			'nodeContextPath' => $node->getContextPath(),
+			'nodeLabel' => $node->getLabel(),
+			'nodeType' => $node->getNodeType()->getName(),
+			'site' => $siteIdentifier
+		));
+
+		$node = self::getClosestAggregateNode($node);
+
+		if ($node !== NULL) {
+			$this->documentNodeIdentifier = $node->getIdentifier();
+			$this->data = Arrays::arrayMergeRecursiveOverrule($this->data, array(
+				'documentNodeContextPath' => $node->getContextPath(),
+				'documentNodeLabel' => $node->getLabel(),
+				'documentNodeType' => $node->getNodeType()->getName()
+			));
+		}
+	}
+
+	/**
+	 * Override the workspace name. *MUST* be called after setNode(), else it won't have an effect.
+	 *
+	 * @param string $workspaceName
+	 */
+	public function setWorkspaceName($workspaceName) {
+		$this->workspaceName = $workspaceName;
+	}
+
+	/**
+	 * @param NodeInterface $node
+	 * @return NodeInterface
+	 */
+	public static function getClosestAggregateNode(NodeInterface $node) {
+		while ($node !== NULL && !$node->getNodeType()->isAggregate()) {
+			$node = $node->getParent();
+		}
+		return $node;
+	}
+
+	/**
+	 * @return NodeInterface the closest document node, if it can be resolved
+	 */
+	public function getDocumentNode() {
+		$context = $this->contextFactory->create(array(
+			'workspaceName' => $this->userService->getCurrentWorkspace()->getName(),
+	 		'dimensions' => $this->dimension,
+			'currentSite' => $this->siteRepository->findByIdentifier($this->data['site']),
+			'invisibleContentShown' => TRUE
+		));
+		return $context->getNodeByIdentifier($this->documentNodeIdentifier);
+	}
+
+	/**
+	 * @return NodeInterface the node itself, if it can be resolved
+	 */
+	public function getNode() {
+		$context = $this->contextFactory->create(array(
+			'workspaceName' => $this->userService->getCurrentWorkspace()->getName(),
+			'dimensions' => $this->dimension,
+			'currentSite' => $this->siteRepository->findByIdentifier($this->data['site']),
+			'invisibleContentShown' => TRUE
+		));
+
+		return $context->getNodeByIdentifier($this->nodeIdentifier);
+	}
+
+	/**
+	 * @return string
+	 */
 	public function __toString() {
 		return sprintf('NodeEvent[%s, %s]', $this->eventType, $this->nodeIdentifier);
 	}
