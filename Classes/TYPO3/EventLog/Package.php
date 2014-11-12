@@ -25,7 +25,9 @@ class Package extends BasePackage {
 	public function boot(\TYPO3\Flow\Core\Bootstrap $bootstrap) {
 		$dispatcher = $bootstrap->getSignalSlotDispatcher();
 
-		$dispatcher->connect('TYPO3\TYPO3CR\Domain\Model\Node', 'nodeAdded', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'nodeAdded');
+		$dispatcher->connect('TYPO3\TYPO3CR\Domain\Model\Node', 'beforeNodeCreate', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'beforeNodeCreate');
+		$dispatcher->connect('TYPO3\TYPO3CR\Domain\Model\Node', 'afterNodeCreation', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'afterNodeCreation');
+
 		$dispatcher->connect('TYPO3\TYPO3CR\Domain\Model\Node', 'nodeUpdated', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'nodeUpdated');
 		$dispatcher->connect('TYPO3\TYPO3CR\Domain\Model\Node', 'nodeRemoved', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'nodeRemoved');
 

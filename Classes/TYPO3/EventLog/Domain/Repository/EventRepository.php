@@ -12,9 +12,8 @@ namespace TYPO3\EventLog\Domain\Repository;
  *                                                                        */
 
 use TYPO3\Flow\Annotations as Flow;
+use TYPO3\Flow\Persistence\Doctrine\Repository;
 use TYPO3\Flow\Persistence\QueryInterface;
-use TYPO3\Flow\Persistence\Repository;
-use TYPO3\Flow\Persistence\RepositoryInterface;
 use TYPO3\Flow\Reflection\ObjectAccess;
 
 /**
@@ -45,5 +44,15 @@ class EventRepository extends Repository {
 		$qb->orderBy('e.uid', 'DESC');
 
 		return $q->execute();
+	}
+
+	public function removeAll() {
+		$cmd = $this->entityManager->getClassMetadata($this->getEntityClassName());
+		$connection = $this->entityManager->getConnection();
+		$dbPlatform = $connection->getDatabasePlatform();
+		$connection->query('SET FOREIGN_KEY_CHECKS=0');
+		$q = $dbPlatform->getTruncateTableSql($cmd->getTableName());
+		$connection->executeUpdate($q);
+		$connection->query('SET FOREIGN_KEY_CHECKS=1');
 	}
 }

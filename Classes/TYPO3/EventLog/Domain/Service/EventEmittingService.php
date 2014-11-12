@@ -76,4 +76,8 @@ class EventEmittingService {
 			return NULL;
 		}
 	}
+
+	public function update($nodeEvent) {
+		$this->eventRepository->update($nodeEvent);
+	}
 }

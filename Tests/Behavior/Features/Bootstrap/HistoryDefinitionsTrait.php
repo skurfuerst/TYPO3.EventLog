@@ -26,6 +26,7 @@ trait HistoryDefinitionsTrait {
 	public function resetHistory() {
 		$eventRepository = $this->getEventRepository();
 		$eventRepository->removeAll();
+		$this->getTYPO3CRIntegrationService()->reset();
 	}
 
 	/**
@@ -33,6 +34,7 @@ trait HistoryDefinitionsTrait {
 	 */
 	public function iHaveAnEmptyHistory() {
 		$this->resetHistory();
+		$this->getSubcontext('flow')->persistAll();
 	}
 
 	/**
@@ -42,16 +44,35 @@ trait HistoryDefinitionsTrait {
 	public function iShouldHaveTheFollowingHistoryEntries(TableNode $table) {
 
 		$allEvents = $this->getEventRepository()->findAll()->toArray();
+		$eventsByInternalId = array();
+		$unmatchedParentEvents = array();
 
 		foreach ($table->getHash() as $i => $row) {
 			$event = $allEvents[$i];
 			/* @var $event \TYPO3\EventLog\Domain\Model\NodeEvent */
 			foreach ($row as $rowName => $rowValue) {
 				switch ($rowName) {
+					case 'ID':
+						if ($rowValue === '') break;
+						$eventsByInternalId[$rowValue] = $event;
+						if (isset($unmatchedParentEvents[$rowValue])) {
+							Assert::assertSame($eventsByInternalId[$rowValue], $event, 'Parent event does not match. (2)');
+							unset($unmatchedParentEvents[$rowValue]);
+						}
+						break;
+					case 'Parent Event':
+						if ($rowValue === '') break;
+						if (isset($eventsByInternalId[$rowValue])) {
+							Assert::assertSame($eventsByInternalId[$rowValue], $event->getParentEvent(), 'Parent event does not match. (1)');
+						} else {
+							$unmatchedParentEvents[$rowValue] = $event->getParentEvent();
+						}
+						break;
 					case 'Event Type':
-						Assert::assertEquals($rowValue, $event->getEventType(), 'Event Type does not match.');
+						Assert::assertEquals($rowValue, $event->getEventType(), 'Event Type does not match. Expected: ' . $rowValue . '. Actual: ' . $event->getEventType());
 						break;
 					case 'Node Identifier':
+						if ($rowValue === '') break;
 						Assert::assertEquals($rowValue, $event->getNodeIdentifier(), 'Node Identifier does not match.');
 						break;
 					case 'Document Node Identifier':
@@ -67,6 +88,7 @@ trait HistoryDefinitionsTrait {
 		}
 
 		Assert::assertEquals(count($table->getHash()), count($allEvents), 'Number of expected events does not match total number of events.');
+		Assert::assertEmpty($unmatchedParentEvents, 'Unmatched parent events found');
 	}
 
 	/**
@@ -74,5 +96,11 @@ trait HistoryDefinitionsTrait {
 	 */
 	protected function getEventRepository() {
 		return $this->getObjectManager()->get('TYPO3\EventLog\Domain\Repository\EventRepository');
+	}
+	/**
+	 * @return \TYPO3\EventLog\Integrations\TYPO3CRIntegrationService
+	 */
+	protected function getTYPO3CRIntegrationService() {
+		return $this->getObjectManager()->get('TYPO3\EventLog\Integrations\TYPO3CRIntegrationService');
 	}
 }

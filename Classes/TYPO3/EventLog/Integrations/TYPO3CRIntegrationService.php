@@ -50,10 +50,25 @@ class TYPO3CRIntegrationService extends AbstractIntegrationService {
 
 	protected $changedNodes = array();
 
-	public function nodeAdded(NodeInterface $node) {
+	protected $currentNodeAddEvents = array();
+
+
+	public function beforeNodeCreate() {
+		var_dump("beforeNodeAdd");
 		/* @var $nodeEvent NodeEvent */
 		$nodeEvent = $this->eventEmittingService->emit(self::NODE_ADDED, array(), 'TYPO3\EventLog\Domain\Model\NodeEvent');
+		$this->currentNodeAddEvents[] = $nodeEvent;
+		$this->eventEmittingService->pushContext($nodeEvent);
+	}
+
+	public function afterNodeCreation(NodeInterface $node) {
+		var_dump("nodeAdded");
+		/* @var $nodeEvent NodeEvent */
+		$nodeEvent = array_pop($this->currentNodeAddEvents);
 		$nodeEvent->setNode($node);
+		$this->eventEmittingService->popContext();
+		// not fully sure why this is needed... but if it helps
+		$this->eventEmittingService->update($nodeEvent);
 	}
 	public function nodeUpdated(NodeInterface $node) {
 		if (!isset($this->changedNodes[$node->getContextPath()])) {
@@ -174,13 +189,20 @@ class TYPO3CRIntegrationService extends AbstractIntegrationService {
 			$nodeEvent = $this->eventEmittingService->emit(self::NODE_UPDATED, $data, 'TYPO3\EventLog\Domain\Model\NodeEvent');
 			$nodeEvent->setNode($node);
 		}
+
+		$this->changedNodes = array();
 	}
 
 
 	protected $scheduledNodeEventUpdates = array();
 
 	public function afterNodePublishing(NodeInterface $node, Workspace $targetWorkspace) {
+		var_dump("afterPublish1");
 		$documentNode = NodeEvent::getClosestDocumentNode($node);
+
+		if ($documentNode === NULL) {
+			return;
+		}
 
 		$this->scheduledNodeEventUpdates[$documentNode->getContextPath()] = array(
 
@@ -224,5 +246,13 @@ class TYPO3CRIntegrationService extends AbstractIntegrationService {
 		}
 
 		$this->scheduledNodeEventUpdates = array();
+	}
+
+	public function reset() {
+		$this->changedNodes = array();
+		$this->scheduledNodeEventUpdates = array();
+		$this->currentlyAdopting = FALSE;
+		$this->currentlyCopying = FALSE;
+		$this->currentNodeAddEvents = array();
 	}
 }
