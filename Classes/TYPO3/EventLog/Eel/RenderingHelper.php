@@ -19,8 +19,7 @@ use TYPO3\Flow\Reflection\ObjectAccess;
 use TYPO3\TYPO3CR\Domain\Service\NodeTypeManager;
 
 /**
- * Some Functional Programming Array helpers for Eel contexts
- *
+ * Render Content Dimension Names, Node Labels
  */
 class RenderingHelper implements ProtectedContextAwareInterface {
 
@@ -36,10 +35,19 @@ class RenderingHelper implements ProtectedContextAwareInterface {
 	 */
 	protected $contentDimensionsConfiguration;
 
+	/**
+	 * @param ConfigurationManager $configurationManager
+	 */
 	public function injectConfigurationManager(ConfigurationManager $configurationManager) {
 		$this->contentDimensionsConfiguration = $configurationManager->getConfiguration(ConfigurationManager::CONFIGURATION_TYPE_SETTINGS, 'TYPO3.TYPO3CR.contentDimensions');
 	}
 
+	/**
+	 * Render a human-readable description for the passed $dimensions
+	 *
+	 * @param array $dimensions
+	 * @return string
+	 */
 	public function renderDimensions($dimensions) {
 		$rendered = array();
 		foreach ($dimensions as $dimensionIdentifier => $dimensionValue) {
@@ -51,6 +59,11 @@ class RenderingHelper implements ProtectedContextAwareInterface {
 		return implode(', ', $rendered);
 	}
 
+	/**
+	 * @param $dimensionConfiguration
+	 * @param $dimensionValue
+	 * @return array the preset matching $dimensionValue
+	 */
 	protected function findPresetInDimension($dimensionConfiguration, $dimensionValue) {
 		foreach ($dimensionConfiguration['presets'] as $preset) {
 			if (!isset($preset['values'])) continue;
@@ -64,10 +77,13 @@ class RenderingHelper implements ProtectedContextAwareInterface {
 	}
 
 	/**
-	 * render
+	 * render the label for the given $nodeTypeName
+	 *
+	 * @param $nodeTypeName
+	 * @throws \TYPO3\TYPO3CR\Exception\NodeTypeNotFoundException
+	 * @return mixed|string
 	 */
 	public function labelForNodeType($nodeTypeName) {
-
 		if (!$this->nodeTypeManager->hasNodeType($nodeTypeName)) {
 			$explodedNodeTypeName = explode(':', $nodeTypeName);
 			return end($explodedNodeTypeName);
@@ -87,5 +103,4 @@ class RenderingHelper implements ProtectedContextAwareInterface {
 	public function allowsCallOfMethod($methodName) {
 		return TRUE;
 	}
-
 }

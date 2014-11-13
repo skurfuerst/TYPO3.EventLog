@@ -20,7 +20,7 @@ use TYPO3\TYPO3CR\Domain\Model\Workspace;
 use TYPO3\TYPO3CR\Domain\Service\Context;
 
 /**
- * The repository for events
+ * Monitors TYPO3CR changes
  *
  * @Flow\Scope("singleton")
  */

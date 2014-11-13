@@ -4,6 +4,8 @@ TYPO3.EventLog.HistoryModuleController.index = Template {
 	templatePath = 'resource://TYPO3.EventLog/Private/Templates/HistoryModule/Index.html'
 	eventsByDate = ${eventsByDate}
 
+	# TODO: add renderers for other events like USER_ADDED etc
+
 	eventDescription = Case {
 		nodePublished {
 			condition = ${event.eventType == 'NODE_PUBLISHED'}
@@ -15,15 +17,12 @@ TYPO3.EventLog.HistoryModuleController.index = Template {
 
 prototype(TYPO3.EventLog:PublishedNodeRenderer) < prototype(Case) {
 	@override.documentEventsByType = ${EventLog.Array.groupBy(EventLog.Array.filter(event.childEvents, 'documentEvent'), 'eventType')}
-	#@override.documentEventsByType = ${event.childEvents}
 	@override.contentEventsByType = ${EventLog.Array.groupBy(EventLog.Array.filterNegated(event.childEvents, 'documentEvent'), 'eventType')}
 
-
-	debug {
-		#condition = ${documentEventsByType['NODE_ADOPT']}
-		#condition = TRUE
-		type = 'TYPO3.EventLog:Debug'
-	}
+	#debug {
+	#	condition = TRUE
+	#	type = 'TYPO3.EventLog:Debug'
+	#}
 
 	adoptedDocument {
 		condition = ${documentEventsByType['NODE_ADOPT']}
@@ -46,6 +45,11 @@ prototype(TYPO3.EventLog:PublishedNodeRenderer) < prototype(Case) {
 	contentChanged {
 		condition = ${Array.length(contentEventsByType)}
 		type = 'TYPO3.EventLog:PublishedNode.ContentChanged'
+	}
+
+	missingEvent {
+		condition = TRUE
+		type = 'TYPO3.EventLog:PublishedNode.MissingEvent'
 	}
 }
 
@@ -75,6 +79,9 @@ prototype(TYPO3.EventLog:PublishedNode.ContentChanged) < prototype(TYPO3.EventLo
 	value = ${'changed content on ' + EventLog.Rendering.labelForNodeType(event.data.documentNodeType)}
 }
 
+prototype(TYPO3.EventLog:PublishedNode.MissingEvent) < prototype(TYPO3.EventLog:PublishedNode.AbstractSubEvent) {
+	value = ${Array.join(Array.keys(documentEventsByType)) + '; ' + Array.join(Array.keys(contentEventsByType))}
+}
 
 
 prototype(TYPO3.EventLog:Debug) {

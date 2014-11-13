@@ -15,9 +15,8 @@ use TYPO3\Flow\Annotations as Flow;
 use TYPO3\TypoScript\TypoScriptObjects\AbstractTypoScriptObject;
 
 /**
- * A migration helper for TYPO3.Neos:Template
+ * Helper to debug the current TypoScript context
  *
- * @deprecated This implementation is only used for a migration from the TYPO3.Neos:Template TypoScript object
  * @Flow\Scope("prototype")
  */
 class DebugImplementation extends AbstractTypoScriptObject {

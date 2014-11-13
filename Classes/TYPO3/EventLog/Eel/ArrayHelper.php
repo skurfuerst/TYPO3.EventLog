@@ -23,15 +23,31 @@ use TYPO3\Flow\Reflection\ObjectAccess;
  */
 class ArrayHelper implements ProtectedContextAwareInterface {
 
+	/**
+	 * Filter an array of objects, by only keeping the elements where each object's $filterProperty evaluates to TRUE.
+	 *
+	 * @param array $array
+	 * @param string $filterProperty
+	 * @return array
+	 */
 	public function filter($array, $filterProperty) {
 		return $this->filterInternal($array, $filterProperty, FALSE);
 	}
 
-
+	/**
+	 * Filter an array of objects, by only keeping the elements where each object's $filterProperty evaluates to FALSE.
+	 *
+	 * @param array $array
+	 * @param string $filterProperty
+	 * @return array
+	 */
 	public function filterNegated($array, $filterProperty) {
 		return $this->filterInternal($array, $filterProperty, TRUE);
 	}
 
+	/**
+	 * Internal method for filtering
+	 */
 	protected function filterInternal($array, $filterProperty, $negate) {
 		if (is_object($array) && $array instanceof Collection) {
 			$array = $array->toArray();
@@ -46,7 +62,13 @@ class ArrayHelper implements ProtectedContextAwareInterface {
 		});
 	}
 
-
+	/**
+	 * Array is assumed to be an array of objects. Groups this array by the $groupingKey property of each array element.
+	 *
+	 * @param array $array
+	 * @param string $groupingKey
+	 * @return array
+	 */
 	public function groupBy($array, $groupingKey) {
 		$result = array();
 		foreach ($array as $element) {
@@ -54,7 +76,6 @@ class ArrayHelper implements ProtectedContextAwareInterface {
 		}
 		return $result;
 	}
-
 
 	/**
 	 * All methods are considered safe
@@ -65,5 +86,4 @@ class ArrayHelper implements ProtectedContextAwareInterface {
 	public function allowsCallOfMethod($methodName) {
 		return TRUE;
 	}
-
 }

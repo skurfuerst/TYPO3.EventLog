@@ -16,6 +16,9 @@ use TYPO3\Fluid\Core\ViewHelper\AbstractViewHelper;
 use TYPO3\Party\Domain\Model\Person;
 use TYPO3\Flow\Annotations as Flow;
 
+/**
+ * Render user initials for a given username
+ */
 class UserInitialsViewHelper extends AbstractViewHelper {
 
 	/**
@@ -26,7 +29,8 @@ class UserInitialsViewHelper extends AbstractViewHelper {
 
 
 	/**
-	 * render
+	 * render user initials or an abbreviated name for a given username. If the account was deleted, use the username as fallback.
+	 *
 	 * @param string $format
 	 */
 	public function render($format = 'initials') {
