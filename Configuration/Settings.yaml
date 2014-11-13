@@ -9,3 +9,24 @@ TYPO3:
             description: 'This module contains a list of all historic changes in Neos.'
             icon: 'icon-calendar'
             resource: 'TYPO3_EventLog_Backend_Module_HistoryModule'
+
+
+  EventLog:
+    monitorEntities:
+      'TYPO3\Flow\Security\Account':
+        events:
+          created: ACCOUNT_CREATED
+          updated: ACCOUNT_UPDATED
+        data:
+          accountIdentifier: '${entity.accountIdentifier}'
+          authenticationProviderName: '${entity.authenticationProviderName}'
+          expirationDate: '${entity.expirationDate}'
+          roles: '${entity.roles}'
+          party: '${entity.party.name.fullName}'
+      'TYPO3\Party\Domain\Model\AbstractParty':
+        events:
+          created: PERSON_CREATED
+          updated: PERSON_UPDATED
+        data:
+          name: '${entity.name.fullName}'
+          electronicAddresses: '${entity.electronicAddresses}'
