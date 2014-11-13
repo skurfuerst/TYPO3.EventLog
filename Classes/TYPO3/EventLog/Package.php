@@ -53,8 +53,8 @@ class Package extends BasePackage {
 		$dispatcher->connect('TYPO3\TYPO3CR\Domain\Repository\NodeDataRepository', 'repositoryObjectsPersisted', 'TYPO3\EventLog\Integrations\TYPO3CRIntegrationService', 'updateEventsAfterPublish');
 
 
-
-		$dispatcher->connect('TYPO3\Flow\Persistence\Doctrine\PersistenceManager', 'beforeAllObjectsPersist', 'TYPO3\EventLog\Integrations\EntityIntegrationService', 'beforeAllObjectsPersist');
+		// we do not *really* need this method; but if we skip it, the EntityIntegrationService is never instanciated. TODO: improve instanciation
+		$dispatcher->connect('TYPO3\Flow\Persistence\Doctrine\PersistenceManager', 'beforeAllObjectsPersist', 'TYPO3\EventLog\Integrations\EntityIntegrationService', 'dummyMethodToEnsureInstanceExists');
 
 		/*$dispatcher->connect('TYPO3\Neos\Domain\Model\Site', 'siteChanged', $flushConfigurationCache);
 		$dispatcher->connect('TYPO3\Neos\Domain\Model\Site', 'siteChanged', 'TYPO3\Flow\Mvc\Routing\RouterCachingService', 'flushCaches');*/

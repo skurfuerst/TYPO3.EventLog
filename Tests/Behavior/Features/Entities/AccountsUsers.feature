@@ -16,7 +16,7 @@ Feature: Accounts / User Entity Monitoring
           expirationDate: '${entity.expirationDate}'
           roles: '${entity.roles}'
           party: '${entity.party.name.fullName}'
-      'TYPO3\Party\Domain\Model\AbstractParty':
+      'TYPO3\Neos\Domain\Model\User':
         events:
           created: PERSON_CREATED
         data:
@@ -24,6 +24,7 @@ Feature: Accounts / User Entity Monitoring
           electronicAddresses: '${entity.electronicAddresses}'
     """
 
+    # TODO: subclasses in monitorEntities
   @fixtures
   Scenario: Creating an account is monitored
     When I create the following accounts:

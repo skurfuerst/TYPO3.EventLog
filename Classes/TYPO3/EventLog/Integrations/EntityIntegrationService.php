@@ -12,6 +12,7 @@ namespace TYPO3\EventLog\Integrations;
  *                                                                        */
 
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\Event\OnFlushEventArgs;
 use TYPO3\Eel\CompilingEvaluator;
 use TYPO3\Eel\Utility;
 use TYPO3\EventLog\Domain\Service\EventEmittingService;
@@ -60,28 +61,61 @@ class EntityIntegrationService extends AbstractIntegrationService {
 	}
 
 	/**
-	 * This slot is called directly before PersistenceManager::persist is executed.
+	 * Initializes the persistence manager, called by Flow.
+	 *
+	 * @return void
 	 */
-	public function beforeAllObjectsPersist() {
+	public function initializeObject() {
 		/* @var $entityManager EntityManager */
 		$entityManager = $this->entityManager;
-		foreach ($entityManager->getUnitOfWork()->getIdentityMap() as $className => $entities) {
+		$entityManager->getEventManager()->addEventListener(array(\Doctrine\ORM\Events::onFlush), $this);
+	}
+
+	/**
+	 * Dummy method which is called in a prePersist signal. If we remove that, this object is never instanciated and thus
+	 * cannot hook into the Doctrine EntityManager.
+	 */
+	public function dummyMethodToEnsureInstanceExists() {
+		// intentionally empty
+	}
+
+
+	public function onFlush(OnFlushEventArgs $eventArgs) {
+		$entityManager = $eventArgs->getEntityManager();
+		$unitOfWork = $entityManager->getUnitOfWork();
+
+		foreach ($unitOfWork->getScheduledEntityInsertions() as $entity) {
+			$className = get_class($entity);
 			if (isset($this->settings['monitorEntities'][$className])) {
 				$entityMonitoringConfiguration = $this->settings['monitorEntities'][$className];
 
-				foreach ($entities as $entityToPersist) {
-					if (isset($entityMonitoringConfiguration['events']['created']) && $entityManager->getUnitOfWork()->isScheduledForInsert($entityToPersist)) {
-						$this->initializeUser();
-						$data = array();
-						foreach ($entityMonitoringConfiguration['data'] as $key => $eelExpression) {
-							$data[$key] = Utility::evaluateEelExpression($eelExpression, $this->eelEvaluator, array('entity' => $entityToPersist));
-						}
-
-						/* @var $entityToPersist \TYPO3\Flow\Security\Account */
-						$this->eventEmittingService->emit($entityMonitoringConfiguration['events']['created'], $data);
+				if (isset($entityMonitoringConfiguration['events']['created'])) {
+					$this->initializeUser();
+					$data = array();
+					foreach ($entityMonitoringConfiguration['data'] as $key => $eelExpression) {
+						$data[$key] = Utility::evaluateEelExpression($eelExpression, $this->eelEvaluator, array('entity' => $entity));
 					}
+
+					/* @var $entityToPersist \TYPO3\Flow\Security\Account */
+					$event = $this->eventEmittingService->emit($entityMonitoringConfiguration['events']['created'], $data);
+					$unitOfWork->computeChangeSet($entityManager->getClassMetadata('TYPO3\EventLog\Domain\Model\Event'), $event);
 				}
 			}
+		}
+
+		foreach ($unitOfWork->getScheduledEntityUpdates() as $entity) {
+		}
+
+		foreach ($unitOfWork->getScheduledEntityDeletions() as $entity) {
+
+		}
+
+		foreach ($unitOfWork->getScheduledCollectionDeletions() as $col) {
+
+		}
+
+		foreach ($unitOfWork->getScheduledCollectionUpdates() as $col) {
+
 		}
 	}
 }
