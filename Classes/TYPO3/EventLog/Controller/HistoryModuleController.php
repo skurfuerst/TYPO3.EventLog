@@ -26,6 +26,8 @@ class HistoryModuleController extends AbstractModuleController {
 	 */
 	protected $eventRepository;
 
+	protected $defaultViewObjectName = 'TYPO3\TypoScript\View\TypoScriptView';
+
 	public function indexAction() {
 		$events = $this->eventRepository->findRelevantEvents()->toArray();
 
