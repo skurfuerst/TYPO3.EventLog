@@ -3,4 +3,80 @@ include: resource://TYPO3.TypoScript/Private/TypoScript/Root.ts2
 TYPO3.EventLog.HistoryModuleController.index = Template {
 	templatePath = 'resource://TYPO3.EventLog/Private/Templates/HistoryModule/Index.html'
 	eventsByDate = ${eventsByDate}
+
+	eventDescription = Case {
+		nodePublished {
+			condition = ${event.eventType == 'NODE_PUBLISHED'}
+			type = 'TYPO3.EventLog:PublishedNodeRenderer'
+		}
+	}
+}
+
+
+prototype(TYPO3.EventLog:PublishedNodeRenderer) < prototype(Case) {
+	@override.documentEventsByType = ${EventLog.Array.groupBy(EventLog.Array.filter(event.childEvents, 'documentEvent'), 'eventType')}
+	#@override.documentEventsByType = ${event.childEvents}
+	@override.contentEventsByType = ${EventLog.Array.groupBy(EventLog.Array.filterNegated(event.childEvents, 'documentEvent'), 'eventType')}
+
+
+	debug {
+		#condition = ${documentEventsByType['NODE_ADOPT']}
+		#condition = TRUE
+		type = 'TYPO3.EventLog:Debug'
+	}
+
+	adoptedDocument {
+		condition = ${documentEventsByType['NODE_ADOPT']}
+		@override.eventsOfMatchedType = ${documentEventsByType['NODE_ADOPT']}
+		type = 'TYPO3.EventLog:PublishedNode.AdoptDocument'
+	}
+
+	documentLabelChanged {
+		condition = ${documentEventsByType['NODE_LABEL_CHANGED']}
+		@override.eventsOfMatchedType = ${documentEventsByType['NODE_LABEL_CHANGED']}
+		type = 'TYPO3.EventLog:PublishedNode.DocumentLabelChanged'
+	}
+
+	documentCopied {
+		condition = ${documentEventsByType['NODE_COPY']}
+		@override.eventsOfMatchedType = ${documentEventsByType['NODE_COPY']}
+		type = 'TYPO3.EventLog:PublishedNode.DocumentCopied'
+	}
+
+	contentChanged {
+		condition = ${Array.length(contentEventsByType)}
+		type = 'TYPO3.EventLog:PublishedNode.ContentChanged'
+	}
+}
+
+prototype(TYPO3.EventLog:PublishedNode.AbstractSubEvent) < prototype(Value) {
+	@process.appendNodeLink = Array {
+		10 = ${value}
+		20 = Template {
+			templatePath = 'resource://TYPO3.EventLog/Private/Partials/NodeLink.html'
+			event = ${event}
+		}
+	}
+}
+
+prototype(TYPO3.EventLog:PublishedNode.AdoptDocument) < prototype(TYPO3.EventLog:PublishedNode.AbstractSubEvent) {
+	value = ${'created ' + EventLog.Rendering.renderDimensions(eventsOfMatchedType[0].data.targetDimensions) + ' of ' + EventLog.Rendering.labelForNodeType(event.data.documentNodeType)}
+}
+
+prototype(TYPO3.EventLog:PublishedNode.DocumentLabelChanged) < prototype(TYPO3.EventLog:PublishedNode.AbstractSubEvent) {
+	value = ${'renamed ' + EventLog.Rendering.labelForNodeType(event.data.documentNodeType) + ' ' + eventsOfMatchedType[0].data.oldLabel + ' to '}
+}
+
+prototype(TYPO3.EventLog:PublishedNode.DocumentCopied) < prototype(TYPO3.EventLog:PublishedNode.AbstractSubEvent) {
+	value = ${'copied ' + EventLog.Rendering.labelForNodeType(event.data.documentNodeType)}
+}
+
+prototype(TYPO3.EventLog:PublishedNode.ContentChanged) < prototype(TYPO3.EventLog:PublishedNode.AbstractSubEvent) {
+	value = ${'changed content on ' + EventLog.Rendering.labelForNodeType(event.data.documentNodeType)}
+}
+
+
+
+prototype(TYPO3.EventLog:Debug) {
+	@class = 'TYPO3\\EventLog\\TypoScript\\DebugImplementation'
 }

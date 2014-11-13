@@ -1,0 +1,9 @@
+{namespace n=TYPO3\Neos\ViewHelpers}
+<f:if condition="{event.node}">
+	<f:then>
+		<n:link.node node="{event.node}">{event.data.nodeLabel}</n:link.node>
+	</f:then>
+	<f:else>
+		<span title="This node has been removed in the meantime">{event.data.nodeLabel}</span>
+	</f:else>
+</f:if>

@@ -88,7 +88,7 @@ class NodeEvent extends Event {
 		return $this->workspaceName;
 	}
 
-	public function isRelatedToDocumentNode() {
+	public function isDocumentEvent() {
 		return $this->documentNodeIdentifier === $this->nodeIdentifier;
 	}
 

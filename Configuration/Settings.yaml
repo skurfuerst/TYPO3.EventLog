@@ -30,3 +30,9 @@ TYPO3:
         data:
           name: '${entity.name.fullName}'
           electronicAddresses: '${entity.electronicAddresses}'
+
+
+  TypoScript:
+    defaultContext:
+      'EventLog.Array': 'TYPO3\EventLog\Eel\ArrayHelper'
+      'EventLog.Rendering': 'TYPO3\EventLog\Eel\RenderingHelper'
